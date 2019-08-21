@@ -25,7 +25,7 @@ class DemoB extends React.Component {
 VisionCanvasLBus.registerComponent(DemoA);
 VisionCanvasLBus.registerComponent(DemoB);
 
-const IndexTemplate = DragDropContext(HTML5Backend)(IndexTemplateContainer);
+// const IndexTemplate = DragDropContext(HTML5Backend)(IndexTemplateContainer);
 
 class IndexTemplateContainer extends React.Component {
 
@@ -69,7 +69,7 @@ class IndexTemplateContainer extends React.Component {
 ReactDOM.render(
     <HashRouter>
       <Switch>
-        <Route path="/" component={IndexTemplate} />
+        <Route path="/" component={IndexTemplateContainer} />
       </Switch>
     </HashRouter>
   ,
