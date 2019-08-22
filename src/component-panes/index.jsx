@@ -1,21 +1,11 @@
 import React from 'react';
-import { ItemLayer, ComponentNodeDom } from '../react-dnd/drag-node.jsx';
-import { VisionCanvasLBus } from '../component-dispatch-center-bus/index.jsx';
+import { ItemLayer } from '../react-dnd/drag-node.jsx';
 
 export class ComponentPanesVisionCanvasL extends React.Component {
     render() {
-        
+        const { children } = this.props;
         return (<div>
-            <ComponentNodeDom options={{
-                componentName: 'DemoA',
-                options: {},
-                ViewNode: <div key={'DemoA'} style={{ position: 'relative' }}>可拖动对象---DemoA</div>
-            }} />
-            <ComponentNodeDom options={{
-                componentName: 'DemoB',
-                options: {},
-                ViewNode: <div>222</div>
-            }} />
+            { children }
             <ItemLayer />
         </div>)
     }
