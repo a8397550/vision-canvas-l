@@ -1,7 +1,7 @@
 import React from 'react';
 import { uuid } from '../util/index.js';
 import { VisionCanvasLBus } from '../component-dispatch-center-bus/index.jsx';
-
+import './index.less';
 
 const MyContainer = (WrappedComponent, options, index) => <WrappedComponent key={index} {...options} />;
 
@@ -23,7 +23,6 @@ export class VisionCanvasL extends React.Component {
      * } node
      */
     addNode(node) {
-        console.log('aa');
         if (node.componentName) {
             const tempComponent = VisionCanvasLBus.componentPool.filter((item)=>{
                 return item.name === node.componentName;

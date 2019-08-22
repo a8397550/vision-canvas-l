@@ -3,11 +3,16 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import '@babel/polyfill';
 import { Route, HashRouter, Switch } from 'react-router-dom';
-import { VisionCanvasL } from './canvas/index.jsx'
+
+// 这五个组合画布
 import { VisionCanvasLBus } from './component-dispatch-center-bus/index.jsx';
-import { ComponentPanesVisionCanvasL } from './component-panes/index.jsx';
+import { VisionCanvasL } from './canvas/index.jsx';
+import { ComponentDropContainer } from './react-dnd/drop-container.jsx';
 import { DragDropContext } from 'react-dnd';
 import HTML5Backend from 'react-dnd-html5-backend';
+// 组件面板
+import { ComponentPanesVisionCanvasL } from './component-panes/index.jsx';
+
 import './index.less';
 
 class DemoA extends React.Component {
@@ -24,8 +29,6 @@ class DemoB extends React.Component {
 
 VisionCanvasLBus.registerComponent(DemoA);
 VisionCanvasLBus.registerComponent(DemoB);
-
-// const IndexTemplate = DragDropContext(HTML5Backend)(IndexTemplateContainer);
 
 class IndexTemplateContainer extends React.Component {
 
@@ -50,26 +53,33 @@ class IndexTemplateContainer extends React.Component {
     return (
       <div className="vision-canvas-demo-container"> 
         <div className="vision-canvas-demo">
-          <div className="vision-canvas-l-left"></div>
+          <div className="vision-canvas-l-left">
+            <ComponentPanesVisionCanvasL />
+          </div>
           <div className="vision-canvas-l-conter">
-          <VisionCanvasL ref={(refCanvas)=>{
-            if (refCanvas) {
-              this.VisionCanvasL = refCanvas;
-            }
-          }} />
+            <ComponentDropContainer addNode={(node)=>{
+              this.VisionCanvasL.addNode(node)
+            }}>
+              <VisionCanvasL ref={(refCanvas)=>{
+                if (refCanvas) {
+                  this.VisionCanvasL = refCanvas;
+                }
+              }} />
+            </ComponentDropContainer>
           </div>
           <div className="vision-canvas-l-left"></div>
         </div>
       </div>
     )
   }
-
 }
+
+const IndexTemplate = DragDropContext(HTML5Backend)(IndexTemplateContainer);
 
 ReactDOM.render(
     <HashRouter>
       <Switch>
-        <Route path="/" component={IndexTemplateContainer} />
+        <Route path="/" component={IndexTemplate} />
       </Switch>
     </HashRouter>
   ,

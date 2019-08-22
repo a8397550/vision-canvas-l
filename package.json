@@ -1,8 +1,8 @@
 {
   "name": "vision-canvas-l",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "",
-  "main": "index.js",
+  "main": "dist/index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "webpack-dev-server --open --config ./config/webpack.dev.js",
@@ -43,10 +43,11 @@
   },
   "dependencies": {
     "@babel/polyfill": "^7.2.3",
+    "antd": "^3.22.0",
     "lodash": "^4.17.11",
     "react": "^16.7.0",
-    "react-dnd": "^9.3.4",
-    "react-dnd-html5-backend": "^9.3.4",
+    "react-dnd": "^7.4.5",
+    "react-dnd-html5-backend": "^7.4.4",
     "react-dom": "^16.7.0",
     "react-router-dom": "^4.3.1",
     "webpack-hot-middleware": "^2.24.3"
