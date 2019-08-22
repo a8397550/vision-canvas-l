@@ -51,6 +51,10 @@ function ItemPreview({ item, isDragging, currentOffset, itemType }) {
 const cardSource = {
   canDrag(props) { // 此方法返回false 组件库面板就不能被拖出，可以设置组件库组件的禁用
     console.log(props);
+    const { options } = props;
+    if (options.data && options.data.disabled) {
+      return false;
+    }
     return true;
   },
 

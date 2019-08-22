@@ -90,7 +90,8 @@ class IndexTemplateContainer extends React.Component {
         {
           id: '0-4',
           title: '子组件4',
-          componentName: 'DemoA'
+          componentName: 'DemoA',
+          disabled: true,
         },
       ]
     }];
@@ -110,10 +111,12 @@ class IndexTemplateContainer extends React.Component {
     // 注册主键面板
     this.arr.forEach((item) => {
       item.children.forEach((_item)=>{
+
         VisionCanvasLBus.registerComponentPanes({
           componentName: _item.componentName,
           ViewNode: <div key={_item.id} style={{ position: 'relative' }}>{_item.title}</div>,
           groupId: item.parentId,
+          disabled: _item.disabled
         });
       });
     });
