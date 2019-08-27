@@ -1,6 +1,6 @@
 {
   "name": "vision-canvas-l",
-  "version": "0.0.5",
+  "version": "0.0.7",
   "repository": { "type": "git", "url": "git+https://github.com/a8397550/vision-canvas-l.git" },
   "description": "",
   "main": "dist/index.js",

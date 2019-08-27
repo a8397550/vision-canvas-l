@@ -4,6 +4,8 @@ import { VisionCanvasLBus } from './src/component-dispatch-center-bus/index.jsx'
 import { ComponentPanesVisionCanvasL } from './src/component-panes/index.jsx';
 import { ItemLayer, ComponentNodeDom } from './src/react-dnd/drag-node.jsx';
 import { ComponentDropContainer } from './src/react-dnd/drop-container.jsx';
+import { DragDropContext } from 'react-dnd'; // react-dnd
+import HTML5Backend from 'react-dnd-html5-backend'; // react-dnd的相关方法
 
 export {
     VisionCanvasLBus, // 控制中心
@@ -12,5 +14,7 @@ export {
     AttributePanesVisionCanvasL, // 属性面板
     ItemLayer, // react-dnd 已经配置好的对象，可以自己配置
     ComponentNodeDom, // react-dnd 已经配置好的对象，可以自己配置
-    ComponentDropContainer // 已经配置好的对象，可以自己配置
+    ComponentDropContainer, // react-dnd 已经配置好的对象，可以自己配置
+    DragDropContext, // react-dnd
+    HTML5Backend, // react-dnd
 }
