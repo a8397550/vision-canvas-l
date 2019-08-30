@@ -35,9 +35,9 @@ class DemoB extends React.Component {
 }
 
 // 在画布中注册组件
-VisionCanvasLBus.registerComponent(DemoA);
-VisionCanvasLBus.registerComponent(DemoB);
-VisionCanvasLBus.registerComponent(ColumnarBase);
+VisionCanvasLBus.registerComponent(DemoA, 'DemoA');
+VisionCanvasLBus.registerComponent(DemoB, 'DemoB');
+VisionCanvasLBus.registerComponent(ColumnarBase, 'ColumnarBaseA');
 // VisionCanvasLBus.registerComponent(); // 测试 throw抛出异常
 
 function ViewNode(_item, index, onFn) {
@@ -122,7 +122,7 @@ class IndexTemplateContainer extends React.Component {
           {
             id: '3-1',
             title: '柱状图-图表',
-            componentName: 'ColumnarBase'
+            componentName: 'ColumnarBaseA'
           }
         ]
       },

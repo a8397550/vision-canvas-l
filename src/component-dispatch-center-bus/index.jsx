@@ -16,15 +16,15 @@ function VisionCanvasLComponentDispatchCenterBus() {
     /**
      * @description 在画布中注册组件
      */
-    this.registerComponent = function (component) {
+    this.registerComponent = function (component, componentName) {
         try {
-            if (component && typeof component === 'function') {
+            if (component && typeof component === 'function' && componentName) {
                 const len = this.componentPool.filter((item)=>{
-                    return item.name === component.name;
+                    return item.componentName === componentName;
                 });
                 if (len.length === 0) {
                     this.componentPool.push({
-                        name: component.name,
+                        componentName,
                         component: component
                     });
                     return;

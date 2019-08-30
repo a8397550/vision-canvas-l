@@ -25,7 +25,7 @@ export class VisionCanvasL extends React.Component {
     addNode(node) {
         if (node.componentName) {
             const tempComponent = VisionCanvasLBus.componentPool.filter((item)=>{
-                return item.name === node.componentName;
+                return item.componentName === node.componentName;
             });
             node.component = tempComponent[0].component;
             node.id = uuid();
