@@ -225,7 +225,6 @@ class IndexTemplateContainer extends React.Component {
           </div>
           <div className="vision-canvas-l-conter" style={{ border: '1px solid #ccc' }}>
             <ComponentDropContainer addNode={(node)=>{
-              console.log(node);
               this.VisionCanvasL.addNode(node)
             }}>
               <VisionCanvasL ref={(refCanvas)=>{

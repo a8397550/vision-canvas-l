@@ -48,13 +48,22 @@ const ComponentDropContainer = DropTarget(
     drop: (props, monitor, component) => {
       const { addNode } = props;
 
-      // let left = dropPos.x - containerPos.left;
-      // let top = dropPos.y - containerPos.top;
-      console.log('aa');
+      const container = ReactDOM.findDOMNode (component); // eslint-disable-line
+      const containerPos = container.getBoundingClientRect();
+      const dropPos = monitor.getSourceClientOffset();
+
+      let left = dropPos.x - containerPos.left;
+      let top = dropPos.y - containerPos.top;
 
       const item = monitor.getItem();
       const itemType = monitor.getItemType();
-
+      if (!item.options) {
+        item.options = {};
+      }
+      item.options.dropPos = {};
+      item.options.dropPos.left = left;
+      item.options.dropPos.top = top;
+      
       if (itemType === 'vision-canvas-l') {
         addNode({
           componentName: item.componentName,

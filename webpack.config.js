@@ -4,8 +4,6 @@ const HtmlWebpackPlugin = require('html-webpack-plugin'); // 自动生成页面
 const CleanWebpackPlugin = require('clean-webpack-plugin'); // 自动清理，清理dist旧文件
 const webpack = require('webpack');
 
-console.log(path.join(__dirname, './index.js'));
-
 module.exports = {
     mode: 'development',
     entry: {
