@@ -189,7 +189,8 @@ class IndexTemplateContainer extends React.Component {
     VisionCanvasLBus.setAttribute(temp.id, attr.options);
   }
   ```
-
+5.组件与组件的通信
+可以通过eventBus进行通信，也可以通过redux，mobx等进行事件的触发，监听，等工作
 ### 核心组件
 VisionCanvasLBus 控制中心
 VisionCanvasL 画布组件

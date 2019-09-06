@@ -64,14 +64,61 @@ function viewNumberFn(props) {
   </div>
 }
 
+function EventBus() {
+  this.listeners = [];
+  this.remove = function(eventName) {
+    const arr = this.listeners.filter((temp) => {
+      return temp.eventName !== eventName;
+    });
+    this.listeners = arr;
+  }
+
+  this.trigger = function(eventName, param) {
+    this.listeners.forEach((item) => {
+      if (eventName === item.eventName) {
+        item.fn(param);
+      }
+    })
+  }
+
+  this.on = function(eventName, fn) {
+    this.listeners.push({
+      eventName, 
+      fn
+    });
+  }
+}
+
+const event = new EventBus();
+
 class DemoA extends React.Component {
+  updata(options) {
+    console.log(options);
+  }
   render() {
     const { title, selectValue } = this.props;
-    return (<div>{title}<br/>{selectValue}</div>);
+    return (<div>{title}<br/>{selectValue}
+      <button onClick={()=>{
+        event.trigger('click', {
+          a: 1,
+        });
+      }}>按钮</button>
+    </div>);
   }
 }
 
 class DemoB extends React.Component {
+  constructor(props) {
+    super(props);
+  }
+  updata(options) {
+    console.log(options);
+  }
+  componentDidMount(){
+    event.on('click', function(data){
+      console.log(data);
+    });
+  }
   render() {
     const { title } = this.props;
     return (<div>{title}</div>);
@@ -185,26 +232,14 @@ class IndexTemplateContainer extends React.Component {
         children: [
           {
             id: '0-1',
-            title: '子组件1',
+            title: 'DemoA',
             componentName: 'DemoA',
             options: { title: '666' }
           },
           {
             id: '0-2',
-            title: '子组件2',
+            title: 'DemoB',
             componentName: 'DemoB',
-            options: { title: '666' }
-          },
-          {
-            id: '0-3',
-            title: '子组件3',
-            componentName: 'DemoA',
-            options: { title: '666' }
-          },
-          {
-            id: '0-4',
-            title: '子组件4',
-            componentName: 'DemoA',
             options: { title: '666' }
           },
         ]
@@ -226,28 +261,27 @@ class IndexTemplateContainer extends React.Component {
         children: [
           {
             id: '0-1',
-            title: '子组件1',
+            title: 'DemoA',
             componentName: 'DemoA',
             options: { title: '666' }
           },
           {
             id: '0-2',
-            title: '子组件2',
+            title: 'DemoB',
             componentName: 'DemoB',
             options: { title: '666' }
           },
           {
-            id: '0-3',
-            title: '子组件3',
+            id: '0-1',
+            title: 'DemoA',
             componentName: 'DemoA',
             options: { title: '666' }
           },
           {
-            id: '0-4',
-            title: '子组件4',
-            componentName: 'DemoA',
-            options: { title: '666' },
-            disabled: true,
+            id: '0-2',
+            title: 'DemoB',
+            componentName: 'DemoB',
+            options: { title: '666' }
           },
         ]
       }]

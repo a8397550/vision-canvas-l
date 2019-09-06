@@ -100,35 +100,34 @@ export class VisionCanvasL extends React.Component {
     return false;
   }
 
-  mouseMove(e, type) {
-    e.stopPropagation();
-    e.preventDefault();
+  mouseMove(clientX, clientY) {
     const { moveFlag } = this.props;
     if (this.moveObj && moveFlag) {
-      let target = e.currentTarget;
-      if (type === 'parent') {
-        target = this.moveObj.target;
+      let actives = document.getElementsByClassName('vision-node-active');
+      if (actives) {
+        actives = Array.prototype.slice.call(actives);
+        actives.forEach((target, i) => {
+          let moveX = clientX - this.moveObj.move[target.id].x;
+          let moveY = clientY - this.moveObj.move[target.id].y;
+          if(moveX < 0){
+            moveX = 0
+          }else if(moveX > target.parentElement.clientWidth - target.offsetWidth){
+              moveX = target.parentElement.clientWidth - target.offsetWidth
+          }
+          if(moveY < 0){
+              moveY = 0
+          }else if(moveY > target.parentElement.clientHeight - target.offsetHeight){
+              moveY =  target.parentElement.clientHeight - target.offsetHeight
+          }
+          target.style.left = moveX + 'px';
+          target.style.top = moveY + 'px';
+          const { item } = this.moveObj;
+          item.options.dropPos = {
+            left: moveX,
+            top: moveY,
+          };
+        })
       }
-      const event = e.nativeEvent;
-      let moveX = event.clientX - this.moveObj.x;
-      let moveY = event.clientY - this.moveObj.y;
-      if(moveX < 0){
-        moveX = 0
-      }else if(moveX > target.parentElement.clientWidth - target.offsetWidth){
-          moveX = target.parentElement.clientWidth - target.offsetWidth
-      }
-      if(moveY < 0){
-          moveY = 0
-      }else if(moveY > target.parentElement.clientHeight - target.offsetHeight){
-          moveY =  target.parentElement.clientHeight - target.offsetHeight
-      }
-      target.style.left = moveX + 'px';
-      target.style.top = moveY + 'px';
-      const { item } = this.moveObj;
-      item.options.dropPos = {
-        left: moveX,
-        top: moveY,
-      };
     }
   }
 
@@ -183,15 +182,6 @@ export class VisionCanvasL extends React.Component {
           onMouseDown={(e) => {
             e.stopPropagation();
             e.preventDefault();
-            const target = e.currentTarget;
-            const x = e.clientX - target.offsetLeft;
-            const y = e.clientY - target.offsetTop;
-            this.moveObj = {
-              item: item,
-              x, // 元素现在的位置x
-              y, // 元素现在的位置y
-              target,
-            };
             VisionCanvasLBus.notify({
               options: item.options,
               id: item.id
@@ -202,10 +192,27 @@ export class VisionCanvasL extends React.Component {
             if (len.length === 0) {
               this.selectNodes = [item];
             }
+            const move = {};
+            this.selectNodes.forEach((temp)=>{
+              const dom = document.getElementById(temp.id);
+              if (dom) {
+                move[temp.id] = {
+                  x: e.clientX - dom.offsetLeft,
+                  y: e.clientY - dom.offsetTop,
+                }
+              }
+            })
+            this.moveObj = {
+              item: item,
+              move,
+            };
           }}
           onMouseMove={(e)=>{
             this.setSelector(e);
-            this.mouseMove(e);
+            const event = e.nativeEvent;
+            this.mouseMove(event.clientX, event.clientY);
+            e.stopPropagation();
+            e.preventDefault();
           }}
           onMouseUp={() => {
             this.clearMouseState();
@@ -349,7 +356,10 @@ export class VisionCanvasL extends React.Component {
       }}
       onMouseMove={(e) => {
         this.setSelector(e, 'parent');
-        this.mouseMove(e, 'parent');
+        const event = e.nativeEvent;
+        this.mouseMove(event.clientX, event.clientY);
+        e.stopPropagation();
+        e.preventDefault();
       }}
       >
         <canvas id="vision-canvas-l-canvas" />
