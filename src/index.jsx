@@ -3,32 +3,9 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import '@babel/polyfill';
 import { Route, HashRouter, Switch } from 'react-router-dom';
-import { Collapse, Icon } from 'antd';
+import { Collapse, Icon, Select } from 'antd';
 const { Panel } = Collapse;
 import { Input, InputNumber } from 'antd';
-
-function viewFn(props) {
-  return <div key={props.index}>
-    <div>{props.title}</div>
-    <div>
-      <Input value={props.value} onChange={(e) => {
-        props.onChange(props.key, e.target.value);
-      }} />
-    </div>
-  </div>
-}
-
-function viewNumberFn(props) {
-  return <div key={props.index}>
-    <div>{props.title}</div>
-    <div>
-      <InputNumber value={props.value} onChange={(value) => {
-        props.onChange(props.key, value);
-      }} />
-    </div>
-  </div>
-}
-
 // 控制中心
 import { VisionCanvasLBus } from './component-dispatch-center-bus/index.jsx';
 // 画布组件
@@ -44,14 +21,53 @@ import { AttributePanesVisionCanvasL } from './attribute-panes/index.jsx'
 import './index.less';
 // bizcharts 柱状图
 import ColumnarBase from './bizcharts/columnar/index.jsx';
-import { red } from '_ansi-colors@3.2.4@ansi-colors';
 
+const { Option } = Select;
 
+function viewFn(props) {
+  return <div key={props.index}>
+    <div>{props.title}</div>
+    <div>
+      <Input value={props.value} onChange={(e) => {
+        props.onChange(props.key, e.target.value);
+      }} />
+    </div>
+  </div>
+}
+
+function viewSelectFn(props) {
+  const { attributeParam } = props;
+  return <div key={props.index}>
+    <div>{props.title}</div>
+    <div>
+      <Select value={props.value} style={{ width: 120 }} onChange={(value)=>{
+        props.onChange('selectValue', value);
+      }}>
+        { 
+          attributeParam.options.map((item, index)=>{
+            return <Option key={index} value={item.code}>{item.name}</Option>
+          })
+        }
+      </Select>
+    </div>
+  </div>
+}
+
+function viewNumberFn(props) {
+  return <div key={props.index}>
+    <div>{props.title}</div>
+    <div>
+      <InputNumber value={props.value} onChange={(value) => {
+        props.onChange(props.key, value);
+      }} />
+    </div>
+  </div>
+}
 
 class DemoA extends React.Component {
   render() {
-    const { title } = this.props;
-    return (<div>{title}</div>);
+    const { title, selectValue } = this.props;
+    return (<div>{title}<br/>{selectValue}</div>);
   }
 }
 
@@ -71,6 +87,17 @@ VisionCanvasLBus.registerComponentAttribute('DemoA', [{
   type: viewFn,
   title: 'DemoA的标题名',
   key: 'title'
+},
+{
+  type: viewSelectFn,
+  title: 'select的演示',
+  key: 'selectValue',
+  attributeParam: {
+    options: [
+      { name: 'a1', code: '1' },
+      { name: 'a2', code: '2' },
+    ]
+  }
 },
 {
   type: viewNumberFn,
@@ -246,6 +273,7 @@ class IndexTemplateContainer extends React.Component {
         }
       }
     });
+
     const divB = this.VisionCanvasL.addNode({
       componentName: 'DemoB',
       options: {
@@ -258,8 +286,8 @@ class IndexTemplateContainer extends React.Component {
 
     console.log('divA', divA, demoAAttribute);
     console.log('divB', divB, demoBAttribute);
-    VisionCanvasLBus.setAttribute(divA.id, demoBAttribute.options);
-    VisionCanvasLBus.setAttribute(divB.id, demoAAttribute.options);
+    VisionCanvasLBus.setAttribute(divA.id, demoAAttribute.options);
+    VisionCanvasLBus.setAttribute(divB.id, demoBAttribute.options);
     
     const collapseList = [];
     // 注册主键面板

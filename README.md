@@ -22,7 +22,7 @@ VisionCanvasLBus.registerComponent(DemoB, 'DemoA');
   width: options.width || '100%',
   height: options.width || 40,
   componentName: options.componentName,
-  componentParam: options.componentParam || {},
+  componentParam: options.componentParam || {}, // options.componentParam 会对这个值进行深拷贝的新值赋予
   ViewNode: options.ViewNode || <div>组件占位符</div>
 }
 options.componentParam = {  // node节点的预设值设置
@@ -115,6 +115,7 @@ class IndexTemplateContainer extends React.Component {
       disabled: temp.disabled || false, // 值是true的情况下，禁用表单
       visibility: temp.visibility || true, // 值是true的情况下，在组件面板中显示，为false不显示，默认为true,
       value: undefined,
+      attributeParam: temp.attributeParam || {}, // temp.attributeParam 会对这个值进行深拷贝的新值赋予
     }
   */
   VisionCanvasLBus.registerComponentAttribute('DemoA', [
@@ -212,10 +213,11 @@ AttributePanesVisionCanvasL 属性面板
 组件库面板的拖动与关联画布的放下操作依赖react-dnd<br>
 还使用了ant design，antd的组件<br>
 
-# ision-canvas-l的开发历程
+# vision-canvas-l的开发历程
 > 控制中心
 >> 注册组件
 >> 注册组件库面板零部件
+>> 注册属性面板预设项
 >> 画布与组件库面板双向通信
 >> 画布与属性面板的双向通信
 
