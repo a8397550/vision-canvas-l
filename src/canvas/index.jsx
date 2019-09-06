@@ -204,6 +204,9 @@ export class VisionCanvasL extends React.Component {
                 }
                 this.moveObj.item[temp.id] = temp;
               }
+              if (!dom.classList.contains('vision-node-active')) {
+                dom.classList.add('vision-node-active');
+              }
             })
           }}
           onMouseMove={(e)=>{
@@ -215,10 +218,6 @@ export class VisionCanvasL extends React.Component {
           }}
           onMouseUp={() => {
             this.clearMouseState();
-            // VisionCanvasLBus.notify({
-            //   options: item.options,
-            //   id: item.id
-            // });
           }}
           style={style}
           key={index}
