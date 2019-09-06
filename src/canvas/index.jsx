@@ -12,14 +12,51 @@ export class VisionCanvasL extends React.Component {
 
   static defaultProps = {
     moveFlag: true, // 默认支持拖动
+    width: '',
+    height: '',
+    style: {
+      position: 'relative'
+    },
+    className: '',
   }
 
   constructor(props) {
     super(props);
-    this.state = {};
+    this.state = {
+      width: '',
+      height: '',
+    };
+    this.selectNodes = [];
     this.nodes = [];
-    window.visionCanvasL = this;
+    window.VisionCanvasL = this;
+    window.VisionCanvasLBus = VisionCanvasLBus;
     this.moveObj = null;
+  }
+
+  componentDidMount() {
+    this.setCanvas();
+  }
+
+  setCanvas() {
+    this.canvas = document.getElementById('vision-canvas-l-canvas');
+    const visionCanvasLDom = document.querySelector('.vision-canvas-l');
+    this.canvas.width = visionCanvasLDom.clientWidth;
+    this.canvas.height = visionCanvasLDom.clientHeight;
+    this.ctx = this.canvas.getContext('2d');
+    this.ctx.lineWidth = 1;
+    this.ctx.strokeStyle = '#0070CC';
+    this.ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
+    this.ctx.setLineDash([1, 1]);
+  }
+
+  static getDerivedStateFromProps (nextProps, prevState) {
+    if (nextProps.width !== prevState.width || nextProps.height !== prevState.height) {
+      return {
+        width: nextProps.width,
+        height: nextProps.height,
+      }
+    }
+    return null;
   }
 
   /**
@@ -30,6 +67,9 @@ export class VisionCanvasL extends React.Component {
    * } node
    */
   addNode(node) {
+    if (node && typeof node === 'object') {
+      node = JSON.parse(JSON.stringify(node));
+    }
     if (node.componentName) {
       const tempComponent = VisionCanvasLBus.componentPool.filter((item) => {
         return item.componentName === node.componentName;
@@ -49,7 +89,6 @@ export class VisionCanvasL extends React.Component {
    * @return boolean true表示删除成功，false表示删除失败
   */
   removeNode(id) {
-    let length = -1;
     for (let i = 0; i < this.nodes.length; i++) {
       if (this.nodes[i].id === id) {
         this.nodes.splice(i, 1);
@@ -93,6 +132,16 @@ export class VisionCanvasL extends React.Component {
     }
   }
 
+  update(options) {
+    const len = this.nodes.filter((temp) => {
+      return temp.id === options.id;
+    });
+    if (len.length > 0) {
+      len[0].options = options.options;
+      this.setState({});
+    }
+  }
+
   /**
   * @description 画布将节点渲染出来
   */
@@ -100,20 +149,40 @@ export class VisionCanvasL extends React.Component {
     const { props } = this;
     const { moveFlag } = props;
     return this.nodes.map((item, index) => {
-      // console.log(item.options);
-      const style = {};
+      let style = {};
+      // 默认属性赋值
       if (moveFlag && item.options.dropPos) {
         style.left = item.options.dropPos.left;
         style.top = item.options.dropPos.top;
-      } else {
+      } else if (moveFlag) {
         item.options.dropPos = {
           left: 0,
           top: 0
         };
+        style.left = item.options.dropPos.left;
+        style.top = item.options.dropPos.top;
       }
+      // node节点的className与style的赋值
+      if (!item.options.nodeParam || typeof item.options.nodeParam !== 'object') {
+        item.options.nodeParam = {
+          className: '',
+          style: {},
+        }
+      }
+      if (typeof item.options.nodeParam === 'object' && typeof item.options.nodeParam.style === 'object') {
+        Object.assign(style, item.options.nodeParam.style);
+      }
+      let className = item.options.nodeParam.className
+      className = typeof className !== 'undefined' ? className : '';
+      // 被选中状态赋值
+      const lenSelector = this.selectNodes.filter((temp)=>{
+        return temp.id === item.id;
+      }).length;
       return (
-        <div
+        <div id={item.id}
           onMouseDown={(e) => {
+            e.stopPropagation();
+            e.preventDefault();
             const target = e.currentTarget;
             const x = e.clientX - target.offsetLeft;
             const y = e.clientY - target.offsetTop;
@@ -123,18 +192,52 @@ export class VisionCanvasL extends React.Component {
               y, // 元素现在的位置y
               target,
             };
+            VisionCanvasLBus.notify({
+              options: item.options,
+              id: item.id
+            });
+            const len = this.selectNodes.filter((temp)=>{
+              return temp.id === item.id;
+            });
+            if (len.length === 0) {
+              this.selectNodes = [item];
+            }
           }}
           onMouseMove={(e)=>{
+            this.setSelector(e);
             this.mouseMove(e);
           }}
           onMouseUp={() => {
-            this.moveObj = null;
+            this.clearMouseState();
+            VisionCanvasLBus.notify({
+              options: item.options,
+              id: item.id
+            });
           }}
           style={style}
           key={index}
-          className="vision-node-border">{ MyContainer(item.component, item.options, index) }</div>
+          className={["vision-node-border", className, lenSelector ? 'vision-node-active' : ''].join(' ')}>{ MyContainer(item.component, item.options, index) }</div>
       )
     });
+  }
+
+  /**
+   * @description 获取选中元素 
+   *  
+   */
+  getSelectNodes() {
+    return this.selectNodes;
+  }
+
+  clearSelectNodes() {
+    this.selectNodes = [];
+    const vActive = document.getElementsByClassName('vision-node-active');
+    if (vActive) {
+      const vActives = Array.prototype.slice.call(vActive)
+      for (let i = 0; i < vActives.length; i += 1) {
+        vActives[i].classList.remove('vision-node-active');
+      }
+    }
   }
 
   getByNodeId(id) {
@@ -147,18 +250,109 @@ export class VisionCanvasL extends React.Component {
     return null;
   }
 
+  setSelector(e, type) {
+    if (this.rect) {
+      let target = e.currentTarget;
+      if (type !== 'parent') {
+        target = target.parentElement;
+      }
+      this.rect.x1 = e.clientX - target.offsetLeft;
+      this.rect.y1 = e.clientY - target.offsetTop;
+      this.canvasDraw();
+    }
+  }
+
+
+
+  clearMouseState() {
+    this.ctx.clearRect(0,0, this.canvas.width, this.canvas.height);
+    if (this.rect) {
+      const point = this.getRectPoint();
+      const vNode = document.getElementsByClassName('vision-node-border');
+      if (vNode) {
+        const vNodes = Array.prototype.slice.call(vNode)
+        for (let i = 0; i < vNodes.length; i += 1) {
+          const item = vNodes[i];
+          if (item.offsetLeft - point.x > 0 && (point.x + point.w - item.offsetLeft - item.clientWidth) >= 0 &&
+          item.offsetTop - point.y > 0 && (point.y + point.h - item.offsetTop - item.clientHeight) >= 0) {
+            this.selectNodes.push(this.getByNodeId(item.id));
+            if (!item.classList.contains('vision-node-active')) {
+              item.classList.add('vision-node-active');
+            }
+          }
+        }
+      }
+    }
+    this.moveObj = null;
+    this.rect = null;
+  }
+
+  getRectPoint() {
+    const w = Math.abs(this.rect.x - this.rect.x1);
+    const h = Math.abs(this.rect.y - this.rect.y1);
+    const startPoint = this.rect.x < this.rect.x1 ? this.rect.x : this.rect.x1;
+    const endPoint = this.rect.y < this.rect.y1 ? this.rect.y : this.rect.y1;
+    return {
+      x: startPoint,
+      y: endPoint,
+      w,
+      h
+    }
+  }
+
+  canvasDraw() {
+    if (this.rect) {
+      this.ctx.clearRect(0,0, this.canvas.width, this.canvas.height);
+      this.ctx.beginPath();
+      const point = this.getRectPoint();
+      this.ctx.strokeRect(point.x, point.y, point.w, point.h);
+      this.ctx.fillRect(point.x + 1, point.y + 1, point.w - 2, point.h - 2);
+    }
+  }
+
   render() {
-    return (<div className="vision-canvas-l"
+    this.num += 1;
+    const { width, height } = this.state;
+    const { className, style } = this.props;
+    const _style = {}
+
+    Object.assign(_style, style);
+
+    if (width != '') {
+      const w = parseInt(width, 10);
+      if (!Number.isNaN(w)) {
+        _style.width = w;
+      }
+    }
+    if (height != '') {
+      const h = parseInt(height, 10);
+      if (!Number.isNaN(h)) {
+        _style.width = h;
+      }
+    }
+
+    return (<div className={["vision-canvas-l", className].join(' ')}
+      style={_style}
       onMouseUp={() => {
-        this.moveObj = null;
+        this.clearMouseState();
+      }}
+      onMouseDown={(e)=>{
+        this.clearSelectNodes();
+        const target = e.currentTarget;
+        this.rect = {
+          x: e.clientX - target.offsetLeft,
+          y: e.clientY - target.offsetTop
+        }
       }}
       onMouseLeave={()=>{
-        this.moveObj = null;
+        this.clearMouseState();
       }}
       onMouseMove={(e) => {
+        this.setSelector(e, 'parent');
         this.mouseMove(e, 'parent');
       }}
-      style={{ position: 'relative' }}>
+      >
+        <canvas id="vision-canvas-l-canvas" />
       {this.draw()}
     </div>)
   }

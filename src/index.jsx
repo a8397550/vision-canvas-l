@@ -5,6 +5,29 @@ import '@babel/polyfill';
 import { Route, HashRouter, Switch } from 'react-router-dom';
 import { Collapse, Icon } from 'antd';
 const { Panel } = Collapse;
+import { Input, InputNumber } from 'antd';
+
+function viewFn(props) {
+  return <div key={props.index}>
+    <div>{props.title}</div>
+    <div>
+      <Input value={props.value} onChange={(e) => {
+        props.onChange(props.key, e.target.value);
+      }} />
+    </div>
+  </div>
+}
+
+function viewNumberFn(props) {
+  return <div key={props.index}>
+    <div>{props.title}</div>
+    <div>
+      <InputNumber value={props.value} onChange={(value) => {
+        props.onChange(props.key, value);
+      }} />
+    </div>
+  </div>
+}
 
 // 控制中心
 import { VisionCanvasLBus } from './component-dispatch-center-bus/index.jsx';
@@ -19,18 +42,23 @@ import { ComponentNodeDom } from './react-dnd/drag-node.jsx';
 // 属性面板
 import { AttributePanesVisionCanvasL } from './attribute-panes/index.jsx'
 import './index.less';
-// 
+// bizcharts 柱状图
 import ColumnarBase from './bizcharts/columnar/index.jsx';
+import { red } from '_ansi-colors@3.2.4@ansi-colors';
+
+
 
 class DemoA extends React.Component {
   render() {
-    return (<div>DemoA</div>);
+    const { title } = this.props;
+    return (<div>{title}</div>);
   }
 }
 
 class DemoB extends React.Component {
   render() {
-    return (<div>DemoB</div>);
+    const { title } = this.props;
+    return (<div>{title}</div>);
   }
 }
 
@@ -39,6 +67,40 @@ VisionCanvasLBus.registerComponent(DemoA, 'DemoA');
 VisionCanvasLBus.registerComponent(DemoB, 'DemoB');
 VisionCanvasLBus.registerComponent(ColumnarBase, 'ColumnarBaseA');
 // VisionCanvasLBus.registerComponent(); // 测试 throw抛出异常
+VisionCanvasLBus.registerComponentAttribute('DemoA', [{
+  type: viewFn,
+  title: 'DemoA的标题名',
+  key: 'title'
+},
+{
+  type: viewNumberFn,
+  title: 'left',
+  key: 'dropPos.left'
+},
+{
+  type: viewNumberFn,
+  title: 'top',
+  key: 'dropPos.top'
+}
+]);
+
+VisionCanvasLBus.registerComponentAttribute('DemoB', [{
+  type: viewFn,
+  title: 'DemoB的标题名',
+  key: 'title'
+},
+{
+  type: viewNumberFn,
+  title: 'left',
+  key: 'dropPos.left'
+},
+{
+  type: viewNumberFn,
+  title: 'top',
+  key: 'dropPos.top'
+}
+]);
+
 
 function ViewNode(_item, index, onFn) {
   return (<div className="viewNode" key={_item.id} style={{ position: 'relative' }}>
@@ -97,22 +159,26 @@ class IndexTemplateContainer extends React.Component {
           {
             id: '0-1',
             title: '子组件1',
-            componentName: 'DemoA'
+            componentName: 'DemoA',
+            options: { title: '666' }
           },
           {
             id: '0-2',
             title: '子组件2',
-            componentName: 'DemoB'
+            componentName: 'DemoB',
+            options: { title: '666' }
           },
           {
             id: '0-3',
             title: '子组件3',
-            componentName: 'DemoA'
+            componentName: 'DemoA',
+            options: { title: '666' }
           },
           {
             id: '0-4',
             title: '子组件4',
-            componentName: 'DemoA'
+            componentName: 'DemoA',
+            options: { title: '666' }
           },
         ]
       },{
@@ -122,7 +188,8 @@ class IndexTemplateContainer extends React.Component {
           {
             id: '3-1',
             title: '柱状图-图表',
-            componentName: 'ColumnarBaseA'
+            componentName: 'ColumnarBaseA',
+            options: { title: '666' }
           }
         ]
       },
@@ -133,22 +200,26 @@ class IndexTemplateContainer extends React.Component {
           {
             id: '0-1',
             title: '子组件1',
-            componentName: 'DemoA'
+            componentName: 'DemoA',
+            options: { title: '666' }
           },
           {
             id: '0-2',
             title: '子组件2',
-            componentName: 'DemoB'
+            componentName: 'DemoB',
+            options: { title: '666' }
           },
           {
             id: '0-3',
             title: '子组件3',
-            componentName: 'DemoA'
+            componentName: 'DemoA',
+            options: { title: '666' }
           },
           {
             id: '0-4',
             title: '子组件4',
             componentName: 'DemoA',
+            options: { title: '666' },
             disabled: true,
           },
         ]
@@ -159,15 +230,37 @@ class IndexTemplateContainer extends React.Component {
   }
 
   componentDidMount() {
-    this.VisionCanvasL.addNode({
+    const divA = this.VisionCanvasL.addNode({
       componentName: 'DemoA',
-      options: {}
+      options: {
+        title: 'DemeA--',
+        dropPos: {
+          left: 10,
+          top: 10
+        },
+        nodeParam: {
+          className: 'aaa',
+          style: {
+            color: 'red',
+          }
+        }
+      }
     });
-    this.VisionCanvasL.addNode({
+    const divB = this.VisionCanvasL.addNode({
       componentName: 'DemoB',
-      options: {}
+      options: {
+        title: 'DemoB--',
+      }
     });
 
+    const demoAAttribute = VisionCanvasLBus.getDefaultAttribute('DemoA');
+    const demoBAttribute = VisionCanvasLBus.getDefaultAttribute('DemoB');
+
+    console.log('divA', divA, demoAAttribute);
+    console.log('divB', divB, demoBAttribute);
+    VisionCanvasLBus.setAttribute(divA.id, demoBAttribute.options);
+    VisionCanvasLBus.setAttribute(divB.id, demoAAttribute.options);
+    
     const collapseList = [];
     // 注册主键面板
     const { arr } = this.state;
@@ -179,7 +272,7 @@ class IndexTemplateContainer extends React.Component {
           ViewNode: ViewNode,
           groupId: item.elementId,
           disabled: _item.disabled,
-          componentParam: { xxx: '666' }
+          componentParam: _item.options
         });
       });
     });
@@ -225,17 +318,30 @@ class IndexTemplateContainer extends React.Component {
           </div>
           <div className="vision-canvas-l-conter" style={{ border: '1px solid #ccc' }}>
             <ComponentDropContainer addNode={(node)=>{
-              this.VisionCanvasL.addNode(node)
+              const temp = this.VisionCanvasL.addNode(node);
+              const attr = VisionCanvasLBus.getDefaultAttribute(temp.componentName);
+              if (attr) {
+                VisionCanvasLBus.setAttribute(temp.id, attr.options);
+              }
+              
+              console.log('node:', temp);
             }}>
               <VisionCanvasL ref={(refCanvas)=>{
                 if (refCanvas) {
                   this.VisionCanvasL = refCanvas;
+                  VisionCanvasLBus.removeObserver(refCanvas);
+                  VisionCanvasLBus.addObserver(refCanvas);
                 }
               }} />
             </ComponentDropContainer>
           </div>
           <div className="vision-canvas-l-left">
-            <AttributePanesVisionCanvasL />
+            <AttributePanesVisionCanvasL ref={(refAttributePanes)=>{
+              if (refAttributePanes) {
+                VisionCanvasLBus.removeObserver(refAttributePanes);
+                VisionCanvasLBus.addObserver(refAttributePanes);
+              }
+            }} />
           </div>
         </div>
       </div>
