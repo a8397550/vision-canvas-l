@@ -1,8 +1,9 @@
 import React from 'react';
 import { uuid } from '../util/index.js';
 
-
-// 观察者列表（目标）
+/**
+*  @description 观察者列表（目标）
+*/
 class ObserverList {
   constructor() {
     this.observerList = []
@@ -21,6 +22,34 @@ class ObserverList {
   }
 }
 
+/**
+*  @description 事件调度对象
+*/
+class PubSub {
+  constructor() {
+      this.subscribers = {}
+  }
+  subscribe(type, fn) {
+      if (!Object.prototype.hasOwnProperty.call(this.subscribers, type)) {
+        this.subscribers[type] = [];
+      }
+      this.subscribers[type].push(fn);
+  }
+  unsubscribe(type, fn) {
+      let listeners = this.subscribers[type];
+      if (!listeners || !listeners.length) return;
+      this.subscribers[type] = listeners.filter(v => v !== fn);
+  }
+  publish(type, ...args) {
+      let listeners = this.subscribers[type];
+      if (!listeners || !listeners.length) return;
+      listeners.forEach(fn => fn(...args));        
+  }
+}
+
+/**
+*  @description 深拷贝返回一个新对象, 解决引用传递的问题
+*/
 function AssignToNew(a) {
   // 没有副作用的
   function toNew(target, source) {
@@ -62,12 +91,10 @@ function AssignToNew(a) {
 }
 
 /**
- * 组件调度中心总线
+ * @description 组件调度中心总线
  * 对画布组件，组件面板，属性面板进行数据管理
- * 
- * 
  */
-function VisionCanvasLComponentDispatchCenterBus() {
+export function VisionCanvasLComponentDispatchCenterBus() {
   // 注册组件列表，画布添加组件时，判断存在不存在
   this.componentPool = [];
   // 组件面板列表
@@ -76,21 +103,28 @@ function VisionCanvasLComponentDispatchCenterBus() {
   this.attributePool = [];
   // 属性控制器, 通过id控制
   this.nodeAttribute = {};
-
+  // 观察者列表
   this.observers = new ObserverList();
+  // 事件调度对象
+  this.pubSub = new PubSub();
 
+  // 观察者模式的方法
   this.addObserver = function (observer) {
     this.observers.add(observer);
   }
-
+  
+  // 观察者模式的方法
   this.removeObserver = function (observer) {
     this.observers.remove(observer);
   }
 
+  // 观察者模式的方法
   this.notify = function (options) {
     let obCount = this.observers.count();
     for (let index = 0; index < obCount; index++) {
-      this.observers.get(index).update(options);
+      if (this.observers.get(index).update) {
+        this.observers.get(index).update(options);
+      }
     }
   }
 

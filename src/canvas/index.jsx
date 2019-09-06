@@ -14,10 +14,12 @@ export class VisionCanvasL extends React.Component {
     moveFlag: true, // 默认支持拖动
     width: '',
     height: '',
+    layout: '', // inline-block 行内快布局 , absolute 绝对定位布局
     style: {
       position: 'relative'
     },
     className: '',
+    VisionCanvasLBus: undefined,
   }
 
   constructor(props) {
@@ -28,9 +30,10 @@ export class VisionCanvasL extends React.Component {
     };
     this.selectNodes = [];
     this.nodes = [];
+    this.VisionCanvasLBus = props.VisionCanvasLBus || VisionCanvasLBus;
     window.VisionCanvasL = this;
-    window.VisionCanvasLBus = VisionCanvasLBus;
     this.moveObj = null;
+    this.layout = props.layout;
   }
 
   componentDidMount() {
@@ -71,7 +74,7 @@ export class VisionCanvasL extends React.Component {
       node = JSON.parse(JSON.stringify(node));
     }
     if (node.componentName) {
-      const tempComponent = VisionCanvasLBus.componentPool.filter((item) => {
+      const tempComponent = this.VisionCanvasLBus.componentPool.filter((item) => {
         return item.componentName === node.componentName;
       });
       node.component = tempComponent[0].component;
@@ -100,6 +103,31 @@ export class VisionCanvasL extends React.Component {
     return false;
   }
 
+  mouseUp() {
+    this.ctx.clearRect(0,0, this.canvas.width, this.canvas.height);
+    if (this.rect) {
+      const point = this.getRectPoint();
+      const vNode = document.getElementsByClassName('vision-node-border');
+      if (vNode) {
+        const vNodes = Array.prototype.slice.call(vNode)
+        for (let i = 0; i < vNodes.length; i += 1) {
+          const item = vNodes[i];
+          const range = 1;
+          if (item.offsetLeft - (point.x * range) > 0 && item.offsetTop - (point.y * range) > 0 && 
+            (point.x + point.w - ((item.offsetLeft - item.clientWidth) * range)) >= 0 &&
+            (point.y + point.h - ((item.offsetTop - item.clientHeight) * range)) >= 0) {
+            this.selectNodes.push(this.getByNodeId(item.id));
+            if (!item.classList.contains('vision-node-active')) {
+              item.classList.add('vision-node-active');
+            }
+          }
+        }
+      }
+    }
+    this.moveObj = null;
+    this.rect = null;
+  }
+
   mouseMove(clientX, clientY) {
     const { moveFlag } = this.props;
     if (this.moveObj && moveFlag) {
@@ -107,17 +135,30 @@ export class VisionCanvasL extends React.Component {
       if (actives) {
         actives = Array.prototype.slice.call(actives);
         actives.forEach((target, i) => {
-          let moveX = clientX - this.moveObj.move[target.id].x;
-          let moveY = clientY - this.moveObj.move[target.id].y;
+          const flag = this.layout === 'inline-block' ? true : false;
+          let moveMinX = 0;
+          let moveMinY = 0;
+          let offsetLeft = 0;
+          let offsetTop = 0;
+          const position = this.moveObj.move[target.id];    
+          if (flag) {
+            moveMinX -= position.offsetLeft;
+            moveMinY -= position.offsetTop;
+          } else {
+            offsetLeft = position.offsetLeft;
+            offsetTop = position.offsetTop;
+          }
+          let moveX = clientX - (position.x - offsetLeft);
+          let moveY = clientY - (position.y - offsetTop);
           if(moveX < 0){
-            moveX = 0
+            moveX = moveMinX;
           }else if(moveX > target.parentElement.clientWidth - target.offsetWidth){
-              moveX = target.parentElement.clientWidth - target.offsetWidth
+            moveX = target.parentElement.clientWidth - target.offsetWidth
           }
           if(moveY < 0){
-              moveY = 0
+            moveY = moveMinY;
           }else if(moveY > target.parentElement.clientHeight - target.offsetHeight){
-              moveY =  target.parentElement.clientHeight - target.offsetHeight
+            moveY =  target.parentElement.clientHeight - target.offsetHeight
           }
           target.style.left = moveX + 'px';
           target.style.top = moveY + 'px';
@@ -182,7 +223,7 @@ export class VisionCanvasL extends React.Component {
           onMouseDown={(e) => {
             e.stopPropagation();
             e.preventDefault();
-            VisionCanvasLBus.notify({
+            this.VisionCanvasLBus.notify({
               options: item.options,
               id: item.id
             });
@@ -199,8 +240,10 @@ export class VisionCanvasL extends React.Component {
               const dom = document.getElementById(temp.id);
               if (dom) {
                 this.moveObj.move[temp.id] = {
-                  x: e.clientX - dom.offsetLeft,
-                  y: e.clientY - dom.offsetTop,
+                  x: e.clientX,
+                  y: e.clientY,
+                  offsetLeft: dom.offsetLeft,
+                  offsetTop: dom.offsetTop
                 }
                 this.moveObj.item[temp.id] = temp;
               }
@@ -217,7 +260,7 @@ export class VisionCanvasL extends React.Component {
             e.preventDefault();
           }}
           onMouseUp={() => {
-            this.clearMouseState();
+            this.mouseUp();
           }}
           style={style}
           key={index}
@@ -267,31 +310,6 @@ export class VisionCanvasL extends React.Component {
     }
   }
 
-
-
-  clearMouseState() {
-    this.ctx.clearRect(0,0, this.canvas.width, this.canvas.height);
-    if (this.rect) {
-      const point = this.getRectPoint();
-      const vNode = document.getElementsByClassName('vision-node-border');
-      if (vNode) {
-        const vNodes = Array.prototype.slice.call(vNode)
-        for (let i = 0; i < vNodes.length; i += 1) {
-          const item = vNodes[i];
-          if (item.offsetLeft - point.x > 0 && (point.x + point.w - item.offsetLeft - item.clientWidth) >= 0 &&
-          item.offsetTop - point.y > 0 && (point.y + point.h - item.offsetTop - item.clientHeight) >= 0) {
-            this.selectNodes.push(this.getByNodeId(item.id));
-            if (!item.classList.contains('vision-node-active')) {
-              item.classList.add('vision-node-active');
-            }
-          }
-        }
-      }
-    }
-    this.moveObj = null;
-    this.rect = null;
-  }
-
   getRectPoint() {
     const w = Math.abs(this.rect.x - this.rect.x1);
     const h = Math.abs(this.rect.y - this.rect.y1);
@@ -316,7 +334,6 @@ export class VisionCanvasL extends React.Component {
   }
 
   render() {
-    this.num += 1;
     const { width, height } = this.state;
     const { className, style } = this.props;
     const _style = {}
@@ -336,10 +353,10 @@ export class VisionCanvasL extends React.Component {
       }
     }
 
-    return (<div className={["vision-canvas-l", className].join(' ')}
+    return (<div className={["vision-canvas-l", className, this.layout === 'inline-block' ? 'vision-canvas-l-inline-block' : ''].join(' ')}
       style={_style}
       onMouseUp={() => {
-        this.clearMouseState();
+        this.mouseUp();
       }}
       onMouseDown={(e)=>{
         this.clearSelectNodes();
@@ -350,7 +367,7 @@ export class VisionCanvasL extends React.Component {
         }
       }}
       onMouseLeave={()=>{
-        this.clearMouseState();
+        this.mouseUp();
       }}
       onMouseMove={(e) => {
         this.setSelector(e, 'parent');

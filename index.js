@@ -1,4 +1,4 @@
-import { AttributePanesVisionCanvasL } from './src/attribute-panes/index.jsx';
+import { AttributePanesVisionCanvasL, VisionCanvasLComponentDispatchCenterBus } from './src/attribute-panes/index.jsx';
 import { VisionCanvasL } from './src/canvas/index.jsx';
 import { VisionCanvasLBus } from './src/component-dispatch-center-bus/index.jsx';
 import { ComponentPanesVisionCanvasL } from './src/component-panes/index.jsx';
@@ -8,6 +8,7 @@ import { DragDropContext } from 'react-dnd'; // react-dnd
 import HTML5Backend from 'react-dnd-html5-backend'; // react-dnd的相关方法
 
 export {
+    VisionCanvasLComponentDispatchCenterBus,
     VisionCanvasLBus, // 控制中心
     VisionCanvasL, // 画布
     ComponentPanesVisionCanvasL, // 组件面板

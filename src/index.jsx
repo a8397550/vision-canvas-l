@@ -89,7 +89,7 @@ function EventBus() {
   }
 }
 
-const event = new EventBus();
+export const event = new EventBus();
 
 class DemoA extends React.Component {
   updata(options) {
@@ -252,7 +252,16 @@ class IndexTemplateContainer extends React.Component {
             id: '3-1',
             title: '柱状图-图表',
             componentName: 'ColumnarBaseA',
-            options: { title: '666' }
+            options: { 
+              title: '666', 
+              nodeParam: {
+                className: 'aaa',
+                style: {
+                  position: 'static',
+                }
+              }
+            }
+
           }
         ]
       },
@@ -389,13 +398,16 @@ class IndexTemplateContainer extends React.Component {
               
               console.log('node:', temp);
             }}>
-              <VisionCanvasL ref={(refCanvas)=>{
-                if (refCanvas) {
-                  this.VisionCanvasL = refCanvas;
-                  VisionCanvasLBus.removeObserver(refCanvas);
-                  VisionCanvasLBus.addObserver(refCanvas);
-                }
-              }} />
+              <VisionCanvasL 
+                layout="inline-block"
+                ref={(refCanvas)=>{
+                  if (refCanvas) {
+                    this.VisionCanvasL = refCanvas;
+                    VisionCanvasLBus.removeObserver(refCanvas);
+                    VisionCanvasLBus.addObserver(refCanvas);
+                  }
+                }} 
+              />
             </ComponentDropContainer>
           </div>
           <div className="vision-canvas-l-left">

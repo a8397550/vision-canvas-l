@@ -44,7 +44,7 @@ VisionCanvasLBus.registerComponentPanes({
     groupId: item.groupId, // 可选参数，编组id，编好组后可以通过VisionCanvasLBus.getGroupPanes(groupId) // 获取到组件面板零部件的数组
 });
 ```
-注意：组件面板要配合ComponentPanesVisionCanvasL，ComponentNodeDom结合使用才可以哦
+注意：组件面板要配合ComponentPanesVisionCanvasL，ComponentNodeDom结合使用才可以哦<br>
 ComponentNodeDom组件下面例子中的参数都是必不可少的哦，可以通过{ disabled: true } 可以禁用拖动哦
 ```javascript
 import { ComponentPanesVisionCanvasL } from './component-panes/index.jsx';
@@ -190,7 +190,40 @@ class IndexTemplateContainer extends React.Component {
   }
   ```
 5.组件与组件的通信
-可以通过eventBus进行通信，也可以通过redux，mobx等进行事件的触发，监听，等工作
+可以通过eventBus进行通信，也可以通过redux，mobx等进行事件的触发，监听，等工作<br>
+也可以通过VisionCanvasLBus.addObserver(refCanvas);注册观察者对象，实现监听数据变化，<br>
+但是自身组件必须实现update方法。属性栏和画布是使用这个进行交互并且更新自身状态的<br>
+还可以通过也可以通过VisionCanvasLBus.pubSub的，<br>
+注册subscribe(type:string, fn: function)，<br>
+销毁unsubscribe(type:string, fn: function)<br>
+触发publish(type, ...args)，方法解决数据同步的问题。<br>
+```javascript
+function EventBus() {
+  this.listeners = [];
+  this.remove = function(eventName) {
+    const arr = this.listeners.filter((temp) => {
+      return temp.eventName !== eventName;
+    });
+    this.listeners = arr;
+  }
+
+  this.trigger = function(eventName, param) {
+    this.listeners.forEach((item) => {
+      if (eventName === item.eventName) {
+        item.fn(param);
+      }
+    })
+  }
+
+  this.on = function(eventName, fn) {
+    this.listeners.push({
+      eventName, 
+      fn
+    });
+  }
+}
+export const event = new EventBus();
+```
 ### 核心组件
 VisionCanvasLBus 控制中心
 VisionCanvasL 画布组件
