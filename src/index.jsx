@@ -110,6 +110,7 @@ class DemoA extends React.Component {
 class DemoB extends React.Component {
   constructor(props) {
     super(props);
+    console.log('实验重绘');
   }
   updata(options) {
     console.log(options);

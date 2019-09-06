@@ -122,7 +122,7 @@ export class VisionCanvasL extends React.Component {
           target.style.left = moveX + 'px';
           target.style.top = moveY + 'px';
           const { item } = this.moveObj;
-          item.options.dropPos = {
+          item[target.id].options.dropPos = {
             left: moveX,
             top: moveY,
           };
@@ -192,20 +192,19 @@ export class VisionCanvasL extends React.Component {
             if (len.length === 0) {
               this.selectNodes = [item];
             }
-            const move = {};
+            this.moveObj = {};
+            this.moveObj.move = {};
+            this.moveObj.item = {};
             this.selectNodes.forEach((temp)=>{
               const dom = document.getElementById(temp.id);
               if (dom) {
-                move[temp.id] = {
+                this.moveObj.move[temp.id] = {
                   x: e.clientX - dom.offsetLeft,
                   y: e.clientY - dom.offsetTop,
                 }
+                this.moveObj.item[temp.id] = temp;
               }
             })
-            this.moveObj = {
-              item: item,
-              move,
-            };
           }}
           onMouseMove={(e)=>{
             this.setSelector(e);
@@ -216,10 +215,10 @@ export class VisionCanvasL extends React.Component {
           }}
           onMouseUp={() => {
             this.clearMouseState();
-            VisionCanvasLBus.notify({
-              options: item.options,
-              id: item.id
-            });
+            // VisionCanvasLBus.notify({
+            //   options: item.options,
+            //   id: item.id
+            // });
           }}
           style={style}
           key={index}
