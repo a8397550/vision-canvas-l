@@ -256,9 +256,6 @@ class IndexTemplateContainer extends React.Component {
               title: '666', 
               nodeParam: {
                 className: 'aaa',
-                style: {
-                  position: 'static',
-                }
               }
             }
 
