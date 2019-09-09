@@ -1,6 +1,6 @@
-import { AttributePanesVisionCanvasL, VisionCanvasLComponentDispatchCenterBus } from './src/attribute-panes/index.jsx';
+import { AttributePanesVisionCanvasL } from './src/attribute-panes/index.jsx';
 import { VisionCanvasL } from './src/canvas/index.jsx';
-import { VisionCanvasLBus } from './src/component-dispatch-center-bus/index.jsx';
+import { VisionCanvasLBus, VisionCanvasLComponentDispatchCenterBus } from './src/component-dispatch-center-bus/index.jsx';
 import { ComponentPanesVisionCanvasL } from './src/component-panes/index.jsx';
 import { ItemLayer, ComponentNodeDom } from './src/react-dnd/drag-node.jsx';
 import { ComponentDropContainer } from './src/react-dnd/drop-container.jsx';
