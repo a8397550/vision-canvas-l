@@ -224,6 +224,15 @@ function EventBus() {
 }
 export const event = new EventBus();
 ```
+6.子组件的数据变更可以通过控制总线来完成
+```javascript
+VisionCanvasLBus.notify({
+  options: {
+    text: e.target.value,
+  },
+  id: props.id
+});
+```
 ### 核心组件
 VisionCanvasLBus 控制中心
 VisionCanvasL 画布组件

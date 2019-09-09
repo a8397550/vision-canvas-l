@@ -79,6 +79,7 @@ export class VisionCanvasL extends React.Component {
       });
       node.component = tempComponent[0].component;
       node.id = uuid();
+      node.options.id = node.id;
       this.nodes.push(node);
       this.setState({});
       return node;
@@ -210,7 +211,7 @@ export class VisionCanvasL extends React.Component {
       return temp.id === options.id;
     });
     if (len.length > 0) {
-      len[0].options = options.options;
+      Object.assign(len[0].options, options.options);
       this.setState({});
     }
   }
