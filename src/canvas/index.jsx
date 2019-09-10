@@ -70,9 +70,6 @@ export class VisionCanvasL extends React.Component {
    * } node
    */
   addNode(node) {
-    if (node && typeof node === 'object') {
-      node = JSON.parse(JSON.stringify(node));
-    }
     if (node.componentName) {
       const tempComponent = this.VisionCanvasLBus.componentPool.filter((item) => {
         return item.componentName === node.componentName;
