@@ -259,7 +259,7 @@ export class VisionCanvasL extends React.Component {
         <div id={item.id}
           onMouseDown={(e) => {
             e.stopPropagation();
-            e.preventDefault();
+            // e.preventDefault();
             this.VisionCanvasLBus.notify({
               options: item.options,
               id: item.id
