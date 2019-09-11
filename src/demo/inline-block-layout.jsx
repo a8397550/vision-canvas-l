@@ -88,6 +88,10 @@ function EventBus() {
 export const event = new EventBus();
 
 class DemoA extends React.Component {
+  constructor(props) {
+    super(props);
+    console.log('DemoB实验重绘');
+  }
   updata(options) {
     console.log(options);
   }
@@ -118,7 +122,9 @@ class Text extends React.Component {
     this.state = {
       text: props.text,
     }
+    console.log('text 重新绘制')
   }
+
   render(){
     const { text } = this.state;
     const { props } = this;
@@ -151,7 +157,7 @@ class Text extends React.Component {
 class DemoB extends React.Component {
   constructor(props) {
     super(props);
-    console.log('实验重绘');
+    console.log('DemoB实验重绘');
   }
   updata(options) {
     console.log(options);

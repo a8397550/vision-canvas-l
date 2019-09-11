@@ -50,7 +50,7 @@ class PubSub {
 /**
 *  @description 深拷贝返回一个新对象, 解决引用传递的问题
 */
-function AssignToNew(a) {
+export function AssignToNew(a) {
   // 没有副作用的
   function toNew(target, source) {
     const keys = Object.keys(source);
