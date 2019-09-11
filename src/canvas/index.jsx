@@ -127,8 +127,7 @@ export class VisionCanvasL extends React.Component {
   mouseUp(e) {
     e.stopPropagation();
     this.ctx.clearRect(0,0, this.canvas.width, this.canvas.height);
-    const { moveFlag } = this.props;
-    if (this.rect && moveFlag && this.moveObj) {
+    if (this.rect && this.moveObj) {
       const point = this.getRectPoint();
       const vNode = document.getElementsByClassName('vision-node-border');
       if (vNode) {
@@ -147,11 +146,13 @@ export class VisionCanvasL extends React.Component {
       }
     }
     const flag = this.layout === 'inline-block' ? true : false;
-    if (flag && moveFlag && this.moveObj) {
+    if (flag && this.moveObj) {
       const vNode = document.getElementsByClassName('vision-node-border');
       if (vNode) {
-        const vNodes = Array.prototype.slice.call(vNode);
-        const vNodesSort = vNodes.sort(function(a,b) {
+        let vNodes = Array.prototype.slice.call(vNode);
+        let moveStatus = false; // 位置有没有发送改变
+        let moveChange = false; // 排序位置有没有发送改变
+        vNodes = vNodes.sort(function(a,b) {
           let index = 0;
           if (a.offsetTop < b.offsetTop) {
             index = -1;
@@ -164,24 +165,24 @@ export class VisionCanvasL extends React.Component {
           } else {
             index = 1;
           }
-          return index;
-        });
-        let moveStatus = false; // 位置有没有发送改变
-        let moveChange = false; // 排序位置有没有发送改变
-        for (let i = 0; i < vNodesSort.length; i += 1) {
-          if (vNodesSort[i] !== vNodes[i]) {
+          if (index !== 1) {
             moveChange = true;
           }
-          if (!(vNodesSort[i].style.top === 0 && vNodesSort[i].style.left === 0)) {
+          return index;
+        });
+
+        for (let i = 0; i < vNodes.length; i += 1) {
+          if (!(vNodes[i].style.top === '0px' && vNodes[i].style.left === '0px')) {
             moveStatus = true;
+            break;
           }
         }
         if (moveStatus) {
           const arr = [];
-          for (let i = 0; i < vNodesSort.length; i += 1) {
-            vNodesSort[i].style.left = 0;
-            vNodesSort[i].style.top = 0;
-            const item = this.getByNodeId(vNodesSort[i].id);
+          for (let i = 0; i < vNodes.length; i += 1) {
+            vNodes[i].style.left = '0px';
+            vNodes[i].style.top = '0px';
+            const item = this.getByNodeId(vNodes[i].id);
             item.options.dropPos.top = 0;
             item.options.dropPos.left = 0;
             arr.push(item);
@@ -315,6 +316,7 @@ export class VisionCanvasL extends React.Component {
               return temp.id === item.id;
             });
             if (len.length === 0) {
+              this.clearSelectNodes();
               this.selectNodes = [item];
             }
             this.moveObj = {};
