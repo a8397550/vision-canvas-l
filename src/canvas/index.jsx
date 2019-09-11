@@ -55,6 +55,7 @@ export class VisionCanvasL extends React.Component {
 
   componentDidMount() {
     this.setCanvas();
+    this.VisionCanvasLBus.pubSub.publish('canvas:didmount');
   }
 
   setCanvas() {
@@ -220,17 +221,6 @@ export class VisionCanvasL extends React.Component {
           let moveX = clientX - (position.x - offsetLeft);
           let moveY = clientY - (position.y - offsetTop);
 
-          // if(moveX < 0){
-          //   moveX = 0;
-          // }else if(moveX > target.parentElement.clientWidth - target.offsetWidth){
-          //   moveX = target.parentElement.clientWidth - target.offsetWidth
-          // }
-          // if(moveY < 0){
-          //   moveY = 0;
-          // }else if(moveY > target.parentElement.clientHeight - target.offsetHeight){
-          //   moveY =  target.parentElement.clientHeight - target.offsetHeight
-          // }
-
           target.style.left = moveX + 'px';
           target.style.top = moveY + 'px';
           const { item } = this.moveObj;
@@ -337,15 +327,18 @@ export class VisionCanvasL extends React.Component {
                 dom.classList.add('vision-node-active');
               }
             })
+            this.VisionCanvasLBus.pubSub.publish('node:mousedown', e);
           }}
           onMouseMove={(e)=>{
             this.setSelector(e);
             const event = e.nativeEvent;
             this.mouseMove(event.clientX, event.clientY);
             e.stopPropagation();
+            this.VisionCanvasLBus.pubSub.publish('node:mousemove', e);
           }}
           onMouseUp={(e) => {
             this.mouseUp(e);
+            this.VisionCanvasLBus.pubSub.publish('node:mouseup', e);
           }}
           style={style}
           className={["vision-node-border", className, lenSelector ? 'vision-node-active' : ''].join(' ')}>{ MyContainer(item.component, item.options, index) }</div>
@@ -442,6 +435,7 @@ export class VisionCanvasL extends React.Component {
       style={_style}
       onMouseUp={(e) => {
         this.mouseUp(e);
+        this.VisionCanvasLBus.pubSub.publish('canvas:mouseup', e);
       }}
       onMouseDown={(e)=>{
         this.clearSelectNodes();
@@ -450,15 +444,18 @@ export class VisionCanvasL extends React.Component {
           x: e.clientX - target.offsetLeft,
           y: e.clientY - target.offsetTop
         }
+        this.VisionCanvasLBus.pubSub.publish('canvas:click', e);
       }}
       onMouseLeave={(e)=>{
         // this.mouseUp(e);
+        this.VisionCanvasLBus.pubSub.publish('canvas:mouseleave', e);
       }}
       onMouseMove={(e) => {
         this.setSelector(e, 'parent');
         const event = e.nativeEvent;
         this.mouseMove(event.clientX, event.clientY);
         e.stopPropagation();
+        this.VisionCanvasLBus.pubSub.publish('canvas:mousemove', e);
       }}
       >
         <canvas id="vision-canvas-l-canvas" />
