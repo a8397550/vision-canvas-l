@@ -128,7 +128,8 @@ export class VisionCanvasL extends React.Component {
   mouseUp(e) {
     e.stopPropagation();
     this.ctx.clearRect(0,0, this.canvas.width, this.canvas.height);
-    if (this.rect && this.moveObj) {
+    console.log(this.moveObj)
+    if (this.rect) {
       const point = this.getRectPoint();
       const vNode = document.getElementsByClassName('vision-node-border');
       if (vNode) {
@@ -142,6 +143,7 @@ export class VisionCanvasL extends React.Component {
             if (!item.classList.contains('vision-node-active')) {
               item.classList.add('vision-node-active');
             }
+            console.log(item);
           }
         }
       }
