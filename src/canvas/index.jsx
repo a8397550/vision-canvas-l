@@ -89,6 +89,7 @@ export class VisionCanvasL extends React.Component {
    */
   addNode(node) {
     if (node.componentName) {
+      node = AssignToNew(node);
       const tempComponent = this.VisionCanvasLBus.componentPool.filter((item) => {
         return item.componentName === node.componentName;
       });
@@ -128,7 +129,6 @@ export class VisionCanvasL extends React.Component {
   mouseUp(e) {
     e.stopPropagation();
     this.ctx.clearRect(0,0, this.canvas.width, this.canvas.height);
-    console.log(this.moveObj)
     if (this.rect) {
       const point = this.getRectPoint();
       const vNode = document.getElementsByClassName('vision-node-border');
@@ -143,7 +143,6 @@ export class VisionCanvasL extends React.Component {
             if (!item.classList.contains('vision-node-active')) {
               item.classList.add('vision-node-active');
             }
-            console.log(item);
           }
         }
       }
