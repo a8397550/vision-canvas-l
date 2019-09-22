@@ -2,8 +2,9 @@ import React from 'react';
 import { uuid } from '../util/index.js';
 import { VisionCanvasLBus, AssignToNew } from '../component-dispatch-center-bus/index.jsx';
 import './index.less';
+import { BaseCanvasLContainer } from './mod/base-canvas-l-container/index.jsx';
 
-const MyContainer = (WrappedComponent, options, index) => <WrappedComponent key={index} {...options} />;
+export const MyContainer = (WrappedComponent, options, index) => <WrappedComponent key={index} {...options} />;
 
 /**
  * @description 画布组件
@@ -34,6 +35,7 @@ export class VisionCanvasL extends React.Component {
     window.VisionCanvasL = this;
     this.moveObj = null;
     this.layout = props.layout;
+    this.VisionCanvasLBus.addObserver(this);
   }
 
   shouldComponentUpdate(nextProps, nextState) {
@@ -56,6 +58,10 @@ export class VisionCanvasL extends React.Component {
   componentDidMount() {
     this.setCanvas();
     this.VisionCanvasLBus.pubSub.publish('canvas:didmount');
+  }
+
+  componentWillUnmount() {
+    this.VisionCanvasLBus.removeObserver(this);
   }
 
   setCanvas() {
@@ -249,6 +255,49 @@ export class VisionCanvasL extends React.Component {
     }
   }
 
+  getClassOrStyle(item, moveFlag) {
+    let style = {};
+    if (moveFlag && item.options.dropPos) { // 允许拖动，并且定位属性存在
+      const flag = this.layout === 'inline-block' ? true : false;
+      if (flag) {
+        item.options.dropPos.left = 0;
+        item.options.dropPos.top = 0;
+      }
+      style.left = item.options.dropPos.left;
+      style.top = item.options.dropPos.top;
+    } else if (moveFlag) { // 允许拖动
+      item.options.dropPos = {
+        left: 0,
+        top: 0
+      };
+      style.left = item.options.dropPos.left;
+      style.top = item.options.dropPos.top;
+    }
+    
+    // node节点的className与style的赋值
+    if (!item.options.nodeParam || typeof item.options.nodeParam !== 'object') {
+      item.options.nodeParam = {
+        className: '',
+        style: {},
+      }
+    }
+    if (typeof item.options.nodeParam === 'object' && typeof item.options.nodeParam.style === 'object') {
+      Object.assign(style, item.options.nodeParam.style);
+    }
+    let className = item.options.nodeParam.className
+    className = typeof className !== 'undefined' ? className : '';
+    // 被选中状态赋值，长度大于0表示选中状态
+    let lenSelector = this.selectNodes.filter((temp)=>{
+      return temp.id === item.id;
+    }).length;
+
+    return {
+      style,
+      className,
+      lenSelector
+    }
+  }
+
   /**
   * @description 画布将节点渲染出来
   */
@@ -257,41 +306,13 @@ export class VisionCanvasL extends React.Component {
     const { moveFlag } = props;
     const { nodes } = this.state;
     return nodes.map((item, index) => {
-      let style = {};
       // 默认属性赋值
-      if (moveFlag && item.options.dropPos) {
-        const flag = this.layout === 'inline-block' ? true : false;
-        if (flag) {
-          item.options.dropPos.left = 0;
-          item.options.dropPos.top = 0;
-        }
-        style.left = item.options.dropPos.left;
-        style.top = item.options.dropPos.top;
-      } else if (moveFlag) {
-        item.options.dropPos = {
-          left: 0,
-          top: 0
-        };
-        style.left = item.options.dropPos.left;
-        style.top = item.options.dropPos.top;
-      }
+      const {
+        style,
+        className,
+        lenSelector
+      } = this.getClassOrStyle(item, moveFlag);
       
-      // node节点的className与style的赋值
-      if (!item.options.nodeParam || typeof item.options.nodeParam !== 'object') {
-        item.options.nodeParam = {
-          className: '',
-          style: {},
-        }
-      }
-      if (typeof item.options.nodeParam === 'object' && typeof item.options.nodeParam.style === 'object') {
-        Object.assign(style, item.options.nodeParam.style);
-      }
-      let className = item.options.nodeParam.className
-      className = typeof className !== 'undefined' ? className : '';
-      // 被选中状态赋值
-      const lenSelector = this.selectNodes.filter((temp)=>{
-        return temp.id === item.id;
-      }).length;
       return (
         <div 
           key={item.id}

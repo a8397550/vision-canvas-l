@@ -164,7 +164,7 @@ export function VisionCanvasLComponentDispatchCenterBus() {
             icon: temp.icon || '', // options.icon 只支持JSX.Element
             disabled: temp.disabled || false, // 值是true的情况下，禁用表单
             visibility: temp.visibility || true, // 值是true的情况下，在组件面板中显示，为false不显示，默认为true,
-            value: undefined,
+            value: temp.value,
             attributeParam: temp.attributeParam || {},
           });
         });

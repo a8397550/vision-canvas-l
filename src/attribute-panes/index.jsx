@@ -9,6 +9,12 @@ export class AttributePanesVisionCanvasL extends React.Component {
       options: {},
       id: '',
     }
+    this.VisionCanvasLBus = props.VisionCanvasLBus || VisionCanvasLBus;
+    this.VisionCanvasLBus.addObserver(this);
+  }
+
+  componentWillUnmount() {
+    this.VisionCanvasLBus.removeObserver(this);
   }
 
   update(options) {
@@ -46,14 +52,14 @@ export class AttributePanesVisionCanvasL extends React.Component {
 
   render() {
     const { id, options } = this.state;
-    const op = VisionCanvasLBus.getAttribute(id);
+    const op = this.VisionCanvasLBus.getAttribute(id);
     if (!op) {
       return null;
     }
     return (<div>
       {op.map((item, index) => {
         const value = this.getValue(item.key, options);
-        item.value = value;
+        item.value = value || item.value;
         item.index = index;
         item.onChange = (key, value) => {
           const { options: op } = this.state;
@@ -78,7 +84,7 @@ export class AttributePanesVisionCanvasL extends React.Component {
           this.setState({
             options: op,
           }, () => {
-            VisionCanvasLBus.notify({
+            this.VisionCanvasLBus.notify({
               options: op,
               id: id
             });

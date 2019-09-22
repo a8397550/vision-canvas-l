@@ -1,7 +1,6 @@
 import React from 'react';
-import { Collapse, Icon, Select } from 'antd';
+import { Collapse } from 'antd';
 const { Panel } = Collapse;
-import { Input, InputNumber } from 'antd';
 // 控制中心
 import { VisionCanvasLBus } from '../component-dispatch-center-bus/index.jsx';
 // 画布组件
@@ -15,258 +14,10 @@ import { ComponentNodeDom } from '../react-dnd/drag-node.jsx';
 // 属性面板
 import { AttributePanesVisionCanvasL } from '../attribute-panes/index.jsx'
 import '../index.less';
-// bizcharts 柱状图
-import ColumnarBase from '../bizcharts/columnar/index.jsx';
+ 
 
-const { Option } = Select;
+import { ViewNode } from './absolute-layout.jsx';
 
-function viewFn(props) {
-  return <div key={props.index}>
-    <div>{props.title}</div>
-    <div>
-      <Input value={props.value} onChange={(e) => {
-        props.onChange(props.key, e.target.value);
-      }} />
-    </div>
-  </div>
-}
-
-function viewSelectFn(props) {
-  const { attributeParam } = props;
-  return <div key={props.index}>
-    <div>{props.title}</div>
-    <div>
-      <Select value={props.value} style={{ width: 120 }} onChange={(value)=>{
-        props.onChange('selectValue', value);
-      }}>
-        { 
-          attributeParam.options.map((item, index)=>{
-            return <Option key={index} value={item.code}>{item.name}</Option>
-          })
-        }
-      </Select>
-    </div>
-  </div>
-}
-
-function viewNumberFn(props) {
-  return <div key={props.index}>
-    <div>{props.title}</div>
-    <div>
-      <InputNumber value={props.value} onChange={(value) => {
-        props.onChange(props.key, value);
-      }} />
-    </div>
-  </div>
-}
-
-function EventBus() {
-  this.listeners = [];
-  this.remove = function(eventName) {
-    const arr = this.listeners.filter((temp) => {
-      return temp.eventName !== eventName;
-    });
-    this.listeners = arr;
-  }
-
-  this.trigger = function(eventName, param) {
-    this.listeners.forEach((item) => {
-      if (eventName === item.eventName) {
-        item.fn(param);
-      }
-    })
-  }
-
-  this.on = function(eventName, fn) {
-    this.listeners.push({
-      eventName, 
-      fn
-    });
-  }
-}
-
-export const event = new EventBus();
-
-class DemoA extends React.Component {
-  constructor(props) {
-    super(props);
-    console.log('DemoB实验重绘');
-  }
-  updata(options) {
-    console.log(options);
-  }
-  render() {
-    const { title, selectValue } = this.props;
-    return (<div>{title}<br/>{selectValue}
-      <button onClick={()=>{
-        event.trigger('click', {
-          a: 1,
-        });
-      }}>按钮</button>
-    </div>);
-  }
-}
-
-const { TextArea } = Input;
-
-class Text extends React.Component {
-  static defaultProps = {
-    placeholder: undefined,
-    autosize: {
-      minRows: 3,
-    },
-    text: '',
-  }
-  constructor(props) {
-    super(props);
-    this.state = {
-      text: props.text,
-    }
-    console.log('text 重新绘制')
-  }
-
-  render(){
-    const { text } = this.state;
-    const { props } = this;
-    return (<TextArea
-      value={text}
-      onDoubleClick={(e)=>{
-        e.preventDefault();
-        e.stopPropagation();
-        e.target.focus();
-      }}
-      onChange={(e)=>{
-        this.setState({
-          text: e.target.value,
-        });
-      }}
-      onBlur={(e)=>{
-        VisionCanvasLBus.notify({
-          options: {
-            text: e.target.value,
-          },
-          id: props.id
-        });
-      }}
-      placeholder={props.placeholder}
-      autosize={props.autosize}
-    />)
-  }
-}
-
-class DemoB extends React.Component {
-  constructor(props) {
-    super(props);
-    console.log('DemoB实验重绘');
-  }
-  updata(options) {
-    console.log(options);
-  }
-  componentDidMount(){
-    event.on('click', function(data){
-      console.log(data);
-    });
-  }
-  render() {
-    const { title } = this.props;
-    return (<div>{title}</div>);
-  }
-}
-
-// 在画布中注册组件
-VisionCanvasLBus.registerComponent(DemoA, 'DemoA');
-VisionCanvasLBus.registerComponent(DemoB, 'DemoB');
-VisionCanvasLBus.registerComponent(ColumnarBase, 'ColumnarBaseA');
-VisionCanvasLBus.registerComponent(Text, 'Text');
-// VisionCanvasLBus.registerComponent(); // 测试 throw抛出异常
-VisionCanvasLBus.registerComponentAttribute('DemoA', [{
-  type: viewFn,
-  title: 'DemoA的标题名',
-  key: 'title'
-},
-{
-  type: viewSelectFn,
-  title: 'select的演示',
-  key: 'selectValue',
-  attributeParam: {
-    options: [
-      { name: 'a1', code: '1' },
-      { name: 'a2', code: '2' },
-    ]
-  }
-},
-{
-  type: viewNumberFn,
-  title: 'left',
-  key: 'dropPos.left'
-},
-{
-  type: viewNumberFn,
-  title: 'top',
-  key: 'dropPos.top'
-}
-]);
-
-VisionCanvasLBus.registerComponentAttribute('DemoB', [{
-  type: viewFn,
-  title: 'DemoB的标题名',
-  key: 'title'
-},
-{
-  type: viewNumberFn,
-  title: 'left',
-  key: 'dropPos.left'
-},
-{
-  type: viewNumberFn,
-  title: 'top',
-  key: 'dropPos.top'
-}
-]);
-
-
-function ViewNode(_item, index, onFn) {
-  return (<div className="viewNode" key={_item.id} style={{ position: 'relative' }}>
-    <span className="title" title={_item.title}>
-        <span style={{ display: _item.id !== index ? 'inline-block' : 'none' }}>{_item.title}</span>
-        <input type="text" 
-          className={['input', _item.id === index ? '' : 'none'].join(' ')}
-          onBlur={(e) => {
-            const dom = e.target;
-            onFn(function (self, i, j) {
-              const { arr } = self.state;
-              if (dom.value.length !== 0) {
-                arr[i].children[j].title = dom.value;
-              }
-              self.setState({
-                arr,
-                index: '---',
-              });
-            });
-            
-          }} 
-        /> 
-      </span> 
-      <i className="icon-edit"
-        onClick={(e) => {
-        onFn(function (self){
-          self.setState({
-            index: _item.id
-          });
-          const com = e.target;
-          let pervDom = com;
-          while(pervDom.className !== 'icon-edit') {
-            pervDom = pervDom.parentElement;
-          }
-          pervDom = pervDom.previousElementSibling.lastElementChild;
-          pervDom.value = _item.title;
-          pervDom.focus();
-          pervDom.select();
-        });
-      }} ><Icon type="edit" /></i>
-
-  </div>)
-}
 
 class IndexTemplateContainer extends React.Component {
 
@@ -350,6 +101,10 @@ class IndexTemplateContainer extends React.Component {
     this.VisionCanvasL = {};
     
   }
+
+  componentWillUnmount() {
+    VisionCanvasLBus.componentPanes = [];
+  } 
 
   componentDidMount() {
     const divA = this.VisionCanvasL.addNode({
@@ -454,20 +209,13 @@ class IndexTemplateContainer extends React.Component {
                 ref={(refCanvas)=>{
                   if (refCanvas) {
                     this.VisionCanvasL = refCanvas;
-                    VisionCanvasLBus.removeObserver(refCanvas);
-                    VisionCanvasLBus.addObserver(refCanvas);
                   }
                 }} 
               />
             </ComponentDropContainer>
           </div>
           <div className="vision-canvas-l-left">
-            <AttributePanesVisionCanvasL ref={(refAttributePanes)=>{
-              if (refAttributePanes) {
-                VisionCanvasLBus.removeObserver(refAttributePanes);
-                VisionCanvasLBus.addObserver(refAttributePanes);
-              }
-            }} />
+            <AttributePanesVisionCanvasL />
           </div>
         </div>
       </div>

@@ -6,6 +6,7 @@ import { Input, InputNumber } from 'antd';
 import { VisionCanvasLBus } from '../component-dispatch-center-bus/index.jsx';
 // 画布组件
 import { VisionCanvasL } from '../canvas/index.jsx';
+import { BaseCanvasLContainer } from '../canvas/mod/base-canvas-l-container/index.jsx';
 import { ComponentDropContainer } from '../react-dnd/drop-container.jsx';
 import { DragDropContext } from 'react-dnd';
 import HTML5Backend from 'react-dnd-html5-backend';
@@ -20,7 +21,7 @@ import ColumnarBase from '../bizcharts/columnar/index.jsx';
 
 const { Option } = Select;
 
-function viewFn(props) {
+ function viewFn(props) {
   return <div key={props.index}>
     <div>{props.title}</div>
     <div>
@@ -31,7 +32,7 @@ function viewFn(props) {
   </div>
 }
 
-function viewSelectFn(props) {
+ function viewSelectFn(props) {
   const { attributeParam } = props;
   return <div key={props.index}>
     <div>{props.title}</div>
@@ -49,7 +50,7 @@ function viewSelectFn(props) {
   </div>
 }
 
-function viewNumberFn(props) {
+ function viewNumberFn(props) {
   return <div key={props.index}>
     <div>{props.title}</div>
     <div>
@@ -60,7 +61,7 @@ function viewNumberFn(props) {
   </div>
 }
 
-function EventBus() {
+ function EventBus() {
   this.listeners = [];
   this.remove = function(eventName) {
     const arr = this.listeners.filter((temp) => {
@@ -85,9 +86,9 @@ function EventBus() {
   }
 }
 
-export const event = new EventBus();
+const event = new EventBus();
 
-class DemoA extends React.Component {
+ class DemoA extends React.Component {
   updata(options) {
     console.log(options);
   }
@@ -105,7 +106,7 @@ class DemoA extends React.Component {
 
 const { TextArea } = Input;
 
-class Text extends React.Component {
+ class Text extends React.Component {
   static defaultProps = {
     placeholder: undefined,
     autosize: {
@@ -148,7 +149,7 @@ class Text extends React.Component {
   }
 }
 
-class DemoB extends React.Component {
+ class DemoB extends React.Component {
   constructor(props) {
     super(props);
     console.log('实验重绘');
@@ -172,6 +173,43 @@ VisionCanvasLBus.registerComponent(DemoA, 'DemoA');
 VisionCanvasLBus.registerComponent(DemoB, 'DemoB');
 VisionCanvasLBus.registerComponent(ColumnarBase, 'ColumnarBaseA');
 VisionCanvasLBus.registerComponent(Text, 'Text');
+VisionCanvasLBus.registerComponent(BaseCanvasLContainer, 'BaseCanvasLContainer');
+
+VisionCanvasLBus.registerComponentAttribute('BaseCanvasLContainer', [
+{
+  type: viewSelectFn,
+  title: 'select的演示',
+  key: 'selectValue',
+  attributeParam: {
+    options: [
+      { name: 'a1', code: '1' },
+      { name: 'a2', code: '2' },
+    ]
+  }
+},
+{
+  type: viewNumberFn,
+  title: 'left',
+  key: 'dropPos.left'
+},
+{
+  type: viewNumberFn,
+  title: 'top',
+  key: 'dropPos.top'
+},
+{
+  type: viewNumberFn,
+  title: 'width',
+  key: 'nodeParam.style.width',
+  value: 200
+},
+{
+  type: viewNumberFn,
+  title: 'height',
+  key: 'nodeParam.style.height',
+  value: 200
+}
+]);
 // VisionCanvasLBus.registerComponent(); // 测试 throw抛出异常
 VisionCanvasLBus.registerComponentAttribute('DemoA', [{
   type: viewFn,
@@ -219,7 +257,7 @@ VisionCanvasLBus.registerComponentAttribute('DemoB', [{
 ]);
 
 
-function ViewNode(_item, index, onFn) {
+export function ViewNode(_item, index, onFn) {
   return (<div className="viewNode" key={_item.id} style={{ position: 'relative' }}>
     <span className="title" title={_item.title}>
         <span style={{ display: _item.id !== index ? 'inline-block' : 'none' }}>{_item.title}</span>
@@ -293,6 +331,17 @@ class IndexTemplateContainer extends React.Component {
           },
         ]
       },{
+        elementId: 4,
+        title: '容器',
+        children: [
+          {
+            id: '3-1',
+            title: '基本容器',
+            componentName: 'BaseCanvasLContainer',
+          }
+        ]
+      },
+      {
         elementId: 3,
         title: 'ColumnarBase',
         children: [
@@ -344,6 +393,10 @@ class IndexTemplateContainer extends React.Component {
     this.VisionCanvasL = {};
     
   }
+
+  componentWillUnmount() {
+    VisionCanvasLBus.componentPanes = [];
+  } 
 
   componentDidMount() {
     const divA = this.VisionCanvasL.addNode({
@@ -447,20 +500,13 @@ class IndexTemplateContainer extends React.Component {
                 ref={(refCanvas)=>{
                   if (refCanvas) {
                     this.VisionCanvasL = refCanvas;
-                    VisionCanvasLBus.removeObserver(refCanvas);
-                    VisionCanvasLBus.addObserver(refCanvas);
                   }
                 }} 
               />
             </ComponentDropContainer>
           </div>
           <div className="vision-canvas-l-left">
-            <AttributePanesVisionCanvasL ref={(refAttributePanes)=>{
-              if (refAttributePanes) {
-                VisionCanvasLBus.removeObserver(refAttributePanes);
-                VisionCanvasLBus.addObserver(refAttributePanes);
-              }
-            }} />
+            <AttributePanesVisionCanvasL />
           </div>
         </div>
       </div>
