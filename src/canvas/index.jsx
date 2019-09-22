@@ -1,6 +1,6 @@
 import React from 'react';
 import { uuid } from '../util/index.js';
-import { VisionCanvasLBus, AssignToNew } from '../component-dispatch-center-bus/index.jsx';
+import { VisionCanvasLBus, AssignToNew, VisionCanvasLComponentDispatchCenterBus } from '../component-dispatch-center-bus/index.jsx';
 import './index.less';
 import { BaseCanvasLContainer } from './mod/base-canvas-l-container/index.jsx';
 
@@ -39,7 +39,7 @@ export class VisionCanvasL extends React.Component {
   }
 
   shouldComponentUpdate(nextProps, nextState) {
-    if (nextProps.layout !== this.props.layout || 
+    if (nextProps.layout !== this.props.layout ||
       nextProps.moveFlag !== this.props.moveFlag ||
       nextProps.width !== this.props.width ||
       nextProps.height !== this.props.height ||
@@ -50,9 +50,9 @@ export class VisionCanvasL extends React.Component {
       nextState.width !== this.state.width ||
       nextState.height !== this.state.height
     ) {
-        return true;
-      }
-      return false;
+      return true;
+    }
+    return false;
   }
 
   componentDidMount() {
@@ -76,7 +76,7 @@ export class VisionCanvasL extends React.Component {
     this.ctx.setLineDash([1, 1]);
   }
 
-  static getDerivedStateFromProps (nextProps, prevState) {
+  static getDerivedStateFromProps(nextProps, prevState) {
     if (nextProps.width !== prevState.width || nextProps.height !== prevState.height) {
       return {
         width: nextProps.width,
@@ -95,6 +95,7 @@ export class VisionCanvasL extends React.Component {
    */
   addNode(node) {
     if (node.componentName) {
+      const { nodes } = this.state;
       node = AssignToNew(node);
       const tempComponent = this.VisionCanvasLBus.componentPool.filter((item) => {
         return item.componentName === node.componentName;
@@ -102,7 +103,17 @@ export class VisionCanvasL extends React.Component {
       node.component = tempComponent[0].component;
       node.id = uuid();
       node.options.id = node.id;
-      const { nodes } = this.state;
+      // 容器补充宽高
+      this.paramReplenish(node);
+      // 计算加入到那个容器中
+      const bool = this.containerAdd(nodes, node, false);
+      if (bool) {
+        this.setState({
+          nodes: AssignToNew(nodes),
+        });
+        return node;
+      }
+
       nodes.push(node);
       this.setState({
         nodes: AssignToNew(nodes),
@@ -110,6 +121,119 @@ export class VisionCanvasL extends React.Component {
       return node;
     }
     throw "添加组件异常，没有component"
+  }
+
+  /**
+   * @description 加入的是画布根容器中，返回false，加入的是其他容器中返回true，注意加入到其他容器中，这里是引用类型操作，
+   * @param containerBool 如果是true表示要加入到其他容器中
+   * @param visibleArea 父元素可视区域 
+   */
+  containerAdd(nodes, node, containerBool, visibleArea) {
+    let flag = false;
+    if (!nodes || !Array.isArray(nodes)) {
+      return flag;
+    }
+    for (let i = 0; i < nodes.length; i += 1) {
+      const item = nodes[i];
+      const options = item.options;
+      const componentFlag = item.component instanceof BaseCanvasLContainer || item.component === BaseCanvasLContainer
+      if (componentFlag) {
+        let bool;
+        // containerBool 是false的情况下，表明当前是根元素，就不考虑可视区域的问题
+        if (!containerBool) {
+          visibleArea = {
+            x: 0,
+            y: 0,
+            x1: 0 + document.getElementById('vision-canvas-l-canvas').clientWidth,
+            y1: 0 + document.getElementById('vision-canvas-l-canvas').clientHeight,
+          }
+          bool = this.nodeAddTimeWithinLimits({
+            x: node.options.dropPos.left,
+            y: node.options.dropPos.top,
+            x1: 1,
+            y1: 1
+          }, {
+            x: options.dropPos.left,
+            y: options.dropPos.top,
+            x1: options.dropPos.left + document.getElementById(item.id).clientWidth,
+            y1: options.dropPos.left + document.getElementById(item.id).clientHeight,
+          }, visibleArea, containerBool);
+        } else {
+          // 计算父元素与子元素的交集位置
+        }
+        
+       
+
+        if (bool) {
+          containerBool = true;
+          visibleArea = {
+            x: options.dropPos.left,
+            y: options.dropPos.left,
+            x1: options.dropPos.left + document.getElementById(item.id).clientWidth,
+            y1: options.dropPos.left + document.getElementById(item.id).clientHeight,
+          }
+          flag = this.containerAdd(options.nodeParam.nodes, node, bool, visibleArea);
+          if (flag) { // 如果flag返回的是true的话，证明还在它的下级.
+            return bool;
+          }
+        }
+      }
+      if (i + 1 === nodes.length) {
+        if (containerBool) {
+          flag = true;
+          if (!options.nodeParam.nodes || !Array.isArray(options.nodeParam.nodes)) {
+            options.nodeParam.nodes = [];
+          }
+          options.nodeParam.nodes.push(node);
+        }
+      }
+    }
+    return flag;
+  }
+
+  /**
+   * @description 计算元素的范围，是否在区域内, 容器嵌套容器还要考虑是否是可视区域的问题，不可视区域不能纳入计算
+   * @param {*} item  元素位置
+   * @param {*} point 容器的位置
+   * @param {*} visibleArea 父元素的可视区域
+   * @param {*} containerBool 是不是根容器运算的情况
+   */
+  nodeAddTimeWithinLimits(item, point) {
+    return item.x - point.x > 0 && item.y - point.y > 0 &&
+      point.x + point.w - item.x - item.w >= 0 &&
+      point.y + point.h - item.y - item.h >= 0;
+  }
+
+  /**
+   * @description 容器样式补全，如果是容器的话, 补充宽高，凑齐 左上角xy，右下角xy(左上角x+width，y+height)
+   * @param {*} node 
+   */
+  paramReplenish(node) {
+    if (node.component instanceof BaseCanvasLContainer || node.component === BaseCanvasLContainer) { // 保证每个容器都有宽高
+      if (!node.options.nodeParam) {
+        node.options.nodeParam = {
+          className: '',
+          style: {
+            width: 200,
+            height: 200,
+          },
+          nodes: [],
+        }
+      } else {
+        if (!node.options.nodeParam.style) {
+          node.options.nodeParam.style = {
+            width: 200,
+            height: 200,
+          }
+        } else {
+          if (!node.options.nodeParam.style.width) { node.options.nodeParam.style.width = 200 }
+          if (!node.options.nodeParam.style.height) { node.options.nodeParam.style.height = 200 }
+        }
+        if (!node.options.nodeParam.nodes) {
+          node.options.nodeParam.nodes = [];
+        }
+      }
+    }
   }
 
   /**
@@ -134,7 +258,7 @@ export class VisionCanvasL extends React.Component {
 
   mouseUp(e) {
     e.stopPropagation();
-    this.ctx.clearRect(0,0, this.canvas.width, this.canvas.height);
+    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
     if (this.rect) {
       const point = this.getRectPoint();
       const vNode = document.getElementsByClassName('vision-node-border');
@@ -142,7 +266,7 @@ export class VisionCanvasL extends React.Component {
         const vNodes = Array.prototype.slice.call(vNode)
         for (let i = 0; i < vNodes.length; i += 1) {
           const item = vNodes[i];
-          if (item.offsetLeft - point.x > 0 && item.offsetTop - point.y > 0 && 
+          if (item.offsetLeft - point.x > 0 && item.offsetTop - point.y > 0 &&
             point.x + point.w - item.offsetLeft - item.clientWidth >= 0 &&
             point.y + point.h - item.offsetTop - item.clientHeight >= 0) {
             this.selectNodes.push(this.getByNodeId(item.id));
@@ -160,7 +284,7 @@ export class VisionCanvasL extends React.Component {
         let vNodes = Array.prototype.slice.call(vNode);
         let moveStatus = false; // 位置有没有发送改变
         let moveChange = false; // 排序位置有没有发送改变
-        vNodes = vNodes.sort(function(a,b) {
+        vNodes = vNodes.sort(function (a, b) {
           let index = 0;
           if (a.offsetTop < b.offsetTop) {
             index = -1;
@@ -205,7 +329,7 @@ export class VisionCanvasL extends React.Component {
     }
     this.moveObj = null;
     this.rect = null;
-    
+
   }
 
   mouseMove(clientX, clientY) {
@@ -216,13 +340,13 @@ export class VisionCanvasL extends React.Component {
         actives = Array.prototype.slice.call(actives);
         actives.forEach((target, i) => {
           const flag = this.layout === 'inline-block' ? true : false;
-          
+
           let offsetLeft = 0;
           let offsetTop = 0;
-          const position = this.moveObj.move[target.id];    
+          const position = this.moveObj.move[target.id];
           if (!flag) {
             offsetLeft = position.offsetLeft;
-            offsetTop = position.offsetTop; 
+            offsetTop = position.offsetTop;
           }
 
           let moveX = clientX - (position.x - offsetLeft);
@@ -273,7 +397,7 @@ export class VisionCanvasL extends React.Component {
       style.left = item.options.dropPos.left;
       style.top = item.options.dropPos.top;
     }
-    
+
     // node节点的className与style的赋值
     if (!item.options.nodeParam || typeof item.options.nodeParam !== 'object') {
       item.options.nodeParam = {
@@ -287,7 +411,7 @@ export class VisionCanvasL extends React.Component {
     let className = item.options.nodeParam.className
     className = typeof className !== 'undefined' ? className : '';
     // 被选中状态赋值，长度大于0表示选中状态
-    let lenSelector = this.selectNodes.filter((temp)=>{
+    let lenSelector = this.selectNodes.filter((temp) => {
       return temp.id === item.id;
     }).length;
 
@@ -312,9 +436,9 @@ export class VisionCanvasL extends React.Component {
         className,
         lenSelector
       } = this.getClassOrStyle(item, moveFlag);
-      
+
       return (
-        <div 
+        <div
           key={item.id}
           id={item.id}
           onMouseDown={(e) => {
@@ -324,7 +448,7 @@ export class VisionCanvasL extends React.Component {
               id: item.id,
               type: 'canvas'
             });
-            const len = this.selectNodes.filter((temp)=>{
+            const len = this.selectNodes.filter((temp) => {
               return temp.id === item.id;
             });
             if (len.length === 0) {
@@ -334,7 +458,7 @@ export class VisionCanvasL extends React.Component {
             this.moveObj = {};
             this.moveObj.move = {};
             this.moveObj.item = {};
-            this.selectNodes.forEach((temp)=>{
+            this.selectNodes.forEach((temp) => {
               const dom = document.getElementById(temp.id);
               if (dom) {
                 this.moveObj.move[temp.id] = {
@@ -351,7 +475,7 @@ export class VisionCanvasL extends React.Component {
             })
             this.VisionCanvasLBus.pubSub.publish('node:mousedown', e);
           }}
-          onMouseMove={(e)=>{
+          onMouseMove={(e) => {
             this.setSelector(e);
             const event = e.nativeEvent;
             this.mouseMove(event.clientX, event.clientY);
@@ -363,7 +487,7 @@ export class VisionCanvasL extends React.Component {
             this.VisionCanvasLBus.pubSub.publish('node:mouseup', e);
           }}
           style={style}
-          className={["vision-node-border", className, lenSelector ? 'vision-node-active' : ''].join(' ')}>{ MyContainer(item.component, item.options, index) }</div>
+          className={["vision-node-border", className, lenSelector ? 'vision-node-active' : ''].join(' ')}>{MyContainer(item.component, item.options, index)}</div>
       )
     });
   }
@@ -425,7 +549,7 @@ export class VisionCanvasL extends React.Component {
 
   canvasDraw() {
     if (this.rect) {
-      this.ctx.clearRect(0,0, this.canvas.width, this.canvas.height);
+      this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
       this.ctx.beginPath();
       const point = this.getRectPoint();
       this.ctx.strokeRect(point.x, point.y, point.w, point.h);
@@ -459,7 +583,7 @@ export class VisionCanvasL extends React.Component {
         this.mouseUp(e);
         this.VisionCanvasLBus.pubSub.publish('canvas:mouseup', e);
       }}
-      onMouseDown={(e)=>{
+      onMouseDown={(e) => {
         this.clearSelectNodes();
         const target = e.currentTarget;
         this.rect = {
@@ -468,7 +592,7 @@ export class VisionCanvasL extends React.Component {
         }
         this.VisionCanvasLBus.pubSub.publish('canvas:click', e);
       }}
-      onMouseLeave={(e)=>{
+      onMouseLeave={(e) => {
         // this.mouseUp(e);
         this.VisionCanvasLBus.pubSub.publish('canvas:mouseleave', e);
       }}
@@ -479,8 +603,8 @@ export class VisionCanvasL extends React.Component {
         e.stopPropagation();
         this.VisionCanvasLBus.pubSub.publish('canvas:mousemove', e);
       }}
-      >
-        <canvas id="vision-canvas-l-canvas" />
+    >
+      <canvas id="vision-canvas-l-canvas" />
       {this.draw()}
     </div>)
   }
