@@ -59,7 +59,7 @@ export class AttributePanesVisionCanvasL extends React.Component {
     return (<div>
       {op.map((item, index) => {
         const value = this.getValue(item.key, options);
-        item.value = value || item.value;
+        item.value = value !== undefined || value !== null ? value : item.value;
         item.index = index;
         item.onChange = (key, value) => {
           const { options: op } = this.state;
@@ -86,7 +86,7 @@ export class AttributePanesVisionCanvasL extends React.Component {
           }, () => {
             this.VisionCanvasLBus.notify({
               options: op,
-              id: id
+              id: id,
             });
           })
         }

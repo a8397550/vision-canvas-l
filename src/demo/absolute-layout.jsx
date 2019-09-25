@@ -55,6 +55,7 @@ const { Option } = Select;
     <div>{props.title}</div>
     <div>
       <InputNumber value={props.value} onChange={(value) => {
+        console.log(value);
         props.onChange(props.key, value);
       }} />
     </div>
@@ -426,8 +427,6 @@ class IndexTemplateContainer extends React.Component {
     const demoAAttribute = VisionCanvasLBus.getDefaultAttribute('DemoA');
     const demoBAttribute = VisionCanvasLBus.getDefaultAttribute('DemoB');
 
-    console.log('divA', divA, demoAAttribute);
-    console.log('divB', divB, demoBAttribute);
     VisionCanvasLBus.setAttribute(divA.id, demoAAttribute.options);
     VisionCanvasLBus.setAttribute(divB.id, demoBAttribute.options);
     
@@ -494,7 +493,6 @@ class IndexTemplateContainer extends React.Component {
                 VisionCanvasLBus.setAttribute(temp.id, attr.options);
               }
               
-              console.log('node:', temp);
             }}>
               <VisionCanvasL 
                 ref={(refCanvas)=>{

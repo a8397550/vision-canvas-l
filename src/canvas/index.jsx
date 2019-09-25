@@ -1,10 +1,106 @@
 import React from 'react';
 import { uuid } from '../util/index.js';
-import { VisionCanvasLBus, AssignToNew, VisionCanvasLComponentDispatchCenterBus } from '../component-dispatch-center-bus/index.jsx';
+import { VisionCanvasLBus, AssignToNew } from '../component-dispatch-center-bus/index.jsx';
 import './index.less';
-import { BaseCanvasLContainer } from './mod/base-canvas-l-container/index.jsx';
+import { BaseCanvasLContainer, OverFlowEnum } from './mod/base-canvas-l-container/index.jsx';
+
+/**
+* @description 容器的属性补全
+* */
+export function ParamReplenish(node, props) {
+  let style = {};
+  let className = '';
+  if (node.component instanceof BaseCanvasLContainer || node.component === BaseCanvasLContainer || node instanceof BaseCanvasLContainer) {
+    let { nodeParam, dropPos } = props;
+    if (!dropPos) {
+      props.dropPos = {};
+      dropPos = props.dropPos;
+      dropPos.left = 0;
+      dropPos.top = 0;
+      style.left = dropPos.left;
+      style.right = dropPos.right;
+    }
+    if (!nodeParam || typeof nodeParam !== 'object') {
+      props.nodeParam = {
+        className: '',
+        overflow: 0, // OverFlowEnum的取值
+        nodes: [],
+        style: {
+          width: 200,
+          height: 200,
+          overflow: OverFlowEnum[0],
+        },
+      }
+      nodeParam = props.nodeParam;
+    }
+    if (typeof nodeParam === 'object' && typeof nodeParam.style === 'object') {
+      if (!nodeParam.style.width) { nodeParam.style.width = 200 }
+      if (!nodeParam.style.height) { nodeParam.style.height = 200 }
+      if (!nodeParam.style.overflow) {
+        nodeParam.style.overflow = OverFlowEnum[0];
+        nodeParam.overflow = 0;
+      } else {
+        if (OverFlowEnum.indexOf(nodeParam.style.overflow) !== -1) {
+          nodeParam.overflow = OverFlowEnum.indexOf(nodeParam.style.overflow);
+        } else {
+          nodeParam.overflow = 0;
+        }
+      }
+      Object.assign(style, nodeParam.style);
+    }
+    if (!nodeParam.overflow) {
+      nodeParam.overflow = 0;
+    }
+    className = nodeParam.className
+    className = typeof className !== 'undefined' ? className : '';
+  }
+  return { className, style };
+}
 
 export const MyContainer = (WrappedComponent, options, index) => <WrappedComponent key={index} {...options} />;
+
+export function GetClassOrStyle(item, moveFlag, self) {
+  let style = {};
+  if (moveFlag && item.options.dropPos) { // 允许拖动，并且定位属性存在
+    const flag = self.layout === 'inline-block' ? true : false;
+    if (flag) {
+      item.options.dropPos.left = 0;
+      item.options.dropPos.top = 0;
+    }
+    style.left = item.options.dropPos.left;
+    style.top = item.options.dropPos.top;
+  } else if (moveFlag) { // 允许拖动
+    item.options.dropPos = {
+      left: 0,
+      top: 0
+    };
+    style.left = item.options.dropPos.left;
+    style.top = item.options.dropPos.top;
+  }
+
+  // node节点的className与style的赋值
+  if (!item.options.nodeParam || typeof item.options.nodeParam !== 'object') {
+    item.options.nodeParam = {
+      className: '',
+      style: {},
+    }
+  }
+  if (typeof item.options.nodeParam === 'object' && typeof item.options.nodeParam.style === 'object') {
+    Object.assign(style, item.options.nodeParam.style);
+  }
+  let className = item.options.nodeParam.className
+  className = typeof className !== 'undefined' ? className : '';
+  // 被选中状态赋值，长度大于0表示选中状态
+  let lenSelector = self.selectNodes.filter((temp) => {
+    return temp.id === item.id;
+  }).length;
+
+  return {
+    style,
+    className,
+    lenSelector
+  }
+}
 
 /**
  * @description 画布组件
@@ -36,6 +132,8 @@ export class VisionCanvasL extends React.Component {
     this.moveObj = null;
     this.layout = props.layout;
     this.VisionCanvasLBus.addObserver(this);
+    this._itemPreview = null;
+    this.itemPreview = null;
   }
 
   shouldComponentUpdate(nextProps, nextState) {
@@ -48,8 +146,17 @@ export class VisionCanvasL extends React.Component {
       nextProps.VisionCanvasLBus !== this.props.VisionCanvasLBus ||
       nextState.nodes !== this.state.nodes ||
       nextState.width !== this.state.width ||
-      nextState.height !== this.state.height
+      nextState.height !== this.state.height ||
+      this.itemPreview !== null ||
+      this._itemPreview !== this.itemPreview
     ) {
+      if (this._itemPreview !== this.itemPreview) {
+        // 解决引用问题相同的情况，
+        // 当我触发某个事件时，this._itemPreview === this.itemPreview，当我释放时那个事件时this.itemPreview = null,
+        // 此时左右两边不相等，为了让他重回，然后重制this._itemPreview === this.itemPreview的状态
+        this._itemPreview = null;
+        this.itemPreview = null;
+      }
       return true;
     }
     return false;
@@ -103,8 +210,15 @@ export class VisionCanvasL extends React.Component {
       node.component = tempComponent[0].component;
       node.id = uuid();
       node.options.id = node.id;
-      // 容器补充宽高
-      this.paramReplenish(node);
+      // 给容器加入方法
+      if (node.component instanceof BaseCanvasLContainer || node.component === BaseCanvasLContainer) {
+        node.options.setSelectNodes = this.setSelectNodes;
+        node.options.selectNodesMove = this.selectNodesMove;
+        node.options.getMoveStatus = this.getMoveStatus;
+        node.options.getSelectNodes = this.getSelectNodes;
+      }
+      // 容器补充参数
+      ParamReplenish(node, node.options);
       // 计算加入到那个容器中
       const bool = this.containerAdd(nodes, node, false);
       if (bool) {
@@ -117,7 +231,10 @@ export class VisionCanvasL extends React.Component {
       nodes.push(node);
       this.setState({
         nodes: AssignToNew(nodes),
+      }, () => {
+        // console.log(this.state.nodes);
       });
+
       return node;
     }
     throw "添加组件异常，没有component"
@@ -133,7 +250,7 @@ export class VisionCanvasL extends React.Component {
     if (!nodes || !Array.isArray(nodes)) {
       return flag;
     }
-    for (let i = 0; i < nodes.length; i += 1) {
+    for (let i = nodes.length - 1; i >= 0; i -= 1) {
       const item = nodes[i];
       const options = item.options;
       const componentFlag = item.component instanceof BaseCanvasLContainer || item.component === BaseCanvasLContainer
@@ -141,54 +258,69 @@ export class VisionCanvasL extends React.Component {
         let bool;
         // containerBool 是false的情况下，表明当前是根元素，就不考虑可视区域的问题
         if (!containerBool) {
-          visibleArea = {
+          visibleArea = { // 父亲元素大小
             x: 0,
             y: 0,
-            x1: 0 + document.getElementById('vision-canvas-l-canvas').clientWidth,
-            y1: 0 + document.getElementById('vision-canvas-l-canvas').clientHeight,
+            x1: 0 + document.querySelector('.vision-canvas-l').clientWidth,
+            y1: 0 + document.querySelector('.vision-canvas-l').clientHeight,
+            overflow: OverFlowEnum[0]
           }
-          bool = this.nodeAddTimeWithinLimits({
-            x: node.options.dropPos.left,
-            y: node.options.dropPos.top,
-            x1: 1,
-            y1: 1
-          }, {
-            x: options.dropPos.left,
-            y: options.dropPos.top,
-            x1: options.dropPos.left + document.getElementById(item.id).clientWidth,
-            y1: options.dropPos.left + document.getElementById(item.id).clientHeight,
-          }, visibleArea, containerBool);
-        } else {
-          // 计算父元素与子元素的交集位置
         }
-        
-       
-
-        if (bool) {
+        const [x, y, x1, y1] = [
+          options.dropPos.x || options.dropPos.left, // 组件的左上角x
+          options.dropPos.y || options.dropPos.top, // 组件的左上角y
+          (options.dropPos.x || options.dropPos.left) + document.getElementById(item.id).clientWidth, // 组件的右下角x
+          (options.dropPos.y || options.dropPos.top) + document.getElementById(item.id).clientHeight, // 组件的右下角y
+        ]
+        bool = this.nodeAddTimeWithinLimits({
+          x: node.options.dropPos.left,
+          y: node.options.dropPos.top,
+          x1: node.options.dropPos.left + 50,
+          y1: node.options.dropPos.top + 50,
+        }, {
+            x, y, x1, y1,
+          }, visibleArea, containerBool);
+        if (bool) { // 表示命中
           containerBool = true;
           visibleArea = {
-            x: options.dropPos.left,
-            y: options.dropPos.left,
-            x1: options.dropPos.left + document.getElementById(item.id).clientWidth,
-            y1: options.dropPos.left + document.getElementById(item.id).clientHeight,
+            x, y, x1, y1,
+            overflow: OverFlowEnum[options.nodeParam.overflow]
           }
-          flag = this.containerAdd(options.nodeParam.nodes, node, bool, visibleArea);
+          flag = this.containerAdd(options.nodeParam.nodes, node, containerBool, visibleArea);
           if (flag) { // 如果flag返回的是true的话，证明还在它的下级.
             return bool;
+          } else { // 命中最终结果了
+            if (containerBool) {
+              flag = true;
+              if (!options.nodeParam.nodes || !Array.isArray(options.nodeParam.nodes)) {
+                options.nodeParam.nodes = [];
+              }
+
+              node.options.dropPos.x = node.options.dropPos.left;
+              node.options.dropPos.y = node.options.dropPos.top;
+              node.options.dropPos.left -= (options.dropPos.x || options.dropPos.left);
+              node.options.dropPos.top -= (options.dropPos.y || options.dropPos.top);
+
+              options.nodeParam.nodes.push(node);
+
+              break;
+            }
           }
-        }
-      }
-      if (i + 1 === nodes.length) {
-        if (containerBool) {
-          flag = true;
-          if (!options.nodeParam.nodes || !Array.isArray(options.nodeParam.nodes)) {
-            options.nodeParam.nodes = [];
-          }
-          options.nodeParam.nodes.push(node);
         }
       }
     }
     return flag;
+  }
+
+  setSelectNodes = () => {
+    this.clearSelectNodes();
+    this.selectNodes = [];
+  }
+
+  selectNodesMove = (item) => {
+    this.itemPreview = item;
+    this._itemPreview = item; // 给shouldComponentUpdate
+    this.setState({});
   }
 
   /**
@@ -198,42 +330,25 @@ export class VisionCanvasL extends React.Component {
    * @param {*} visibleArea 父元素的可视区域
    * @param {*} containerBool 是不是根容器运算的情况
    */
-  nodeAddTimeWithinLimits(item, point) {
-    return item.x - point.x > 0 && item.y - point.y > 0 &&
-      point.x + point.w - item.x - item.w >= 0 &&
-      point.y + point.h - item.y - item.h >= 0;
-  }
-
-  /**
-   * @description 容器样式补全，如果是容器的话, 补充宽高，凑齐 左上角xy，右下角xy(左上角x+width，y+height)
-   * @param {*} node 
-   */
-  paramReplenish(node) {
-    if (node.component instanceof BaseCanvasLContainer || node.component === BaseCanvasLContainer) { // 保证每个容器都有宽高
-      if (!node.options.nodeParam) {
-        node.options.nodeParam = {
-          className: '',
-          style: {
-            width: 200,
-            height: 200,
-          },
-          nodes: [],
-        }
-      } else {
-        if (!node.options.nodeParam.style) {
-          node.options.nodeParam.style = {
-            width: 200,
-            height: 200,
-          }
-        } else {
-          if (!node.options.nodeParam.style.width) { node.options.nodeParam.style.width = 200 }
-          if (!node.options.nodeParam.style.height) { node.options.nodeParam.style.height = 200 }
-        }
-        if (!node.options.nodeParam.nodes) {
-          node.options.nodeParam.nodes = [];
-        }
-      }
+  nodeAddTimeWithinLimits(item, point, visibleArea, containerBool) {
+    if (!containerBool || (visibleArea && OverFlowEnum[visibleArea.overflow] === OverFlowEnum[3])) {
+      return item.x - point.x > 0 && item.y - point.y > 0 &&
+        point.x1 - item.x1 > 0 && point.y1 - item.y1 > 0
     }
+    if (item.x - visibleArea.x < 0) {
+      item.x = visibleArea.x;
+    }
+    if (item.y - visibleArea.y < 0) {
+      item.y = visibleArea.y;
+    }
+    if (item.x1 - visibleArea.x1 > 0) {
+      item.x1 = visibleArea.x1;
+    }
+    if (item.y1 - visibleArea.y1 > 0) {
+      item.y1 = visibleArea.y1;
+    }
+    return item.x - point.x > 0 && item.y - point.y > 0 &&
+      point.x1 - item.x1 > 0 && point.y1 - item.y1 > 0
   }
 
   /**
@@ -256,9 +371,18 @@ export class VisionCanvasL extends React.Component {
     return false;
   }
 
-  mouseUp(e) {
+  getMoveStatus = (id) => {
+    return !this.moveObj || (this.moveObj && this.moveObj.move[id])
+  }
+
+  mouseUp = (e) => {
     e.stopPropagation();
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    if (this.itemPreview) {
+      this.addNode(this.itemPreview)
+      this.itemPreview = null;
+      this.setState({});
+    }
     if (this.rect) {
       const point = this.getRectPoint();
       const vNode = document.getElementsByClassName('vision-node-border');
@@ -266,6 +390,7 @@ export class VisionCanvasL extends React.Component {
         const vNodes = Array.prototype.slice.call(vNode)
         for (let i = 0; i < vNodes.length; i += 1) {
           const item = vNodes[i];
+          // 画布框选的业务实现
           if (item.offsetLeft - point.x > 0 && item.offsetTop - point.y > 0 &&
             point.x + point.w - item.offsetLeft - item.clientWidth >= 0 &&
             point.y + point.h - item.offsetTop - item.clientHeight >= 0) {
@@ -327,9 +452,19 @@ export class VisionCanvasL extends React.Component {
         }
       }
     }
+    const len = Object.keys(this.moveObj.item);
+    if (len.length === 1) {
+      const { nodes } = this.state;
+      const bool = this.containerAdd(nodes, this.moveObj.item[len[0]], false, undefined);
+      if (bool) {
+        this.removeNode(this.moveObj.item[len[0]].id);
+        this.setState({
+          nodes: AssignToNew(nodes),
+        });
+      }
+    }
     this.moveObj = null;
     this.rect = null;
-
   }
 
   mouseMove(clientX, clientY) {
@@ -352,6 +487,8 @@ export class VisionCanvasL extends React.Component {
           let moveX = clientX - (position.x - offsetLeft);
           let moveY = clientY - (position.y - offsetTop);
 
+          target.style.zIndex = 99;
+
           target.style.left = moveX + 'px';
           target.style.top = moveY + 'px';
           const { item } = this.moveObj;
@@ -359,12 +496,19 @@ export class VisionCanvasL extends React.Component {
             left: moveX,
             top: moveY,
           };
+          // 通知，属性栏要发送变化了
+          this.VisionCanvasLBus.notify({
+            options: item[target.id].options,
+            id: item[target.id].id,
+            type: 'canvas'
+          });
         })
       }
     }
   }
 
   update(options) {
+    // 只处理属性面板的推送主题
     if (options && options.type !== 'canvas') {
       const { nodes } = this.state;
       const len = nodes.filter((temp) => {
@@ -376,49 +520,6 @@ export class VisionCanvasL extends React.Component {
           nodes: AssignToNew(nodes),
         });
       }
-    }
-  }
-
-  getClassOrStyle(item, moveFlag) {
-    let style = {};
-    if (moveFlag && item.options.dropPos) { // 允许拖动，并且定位属性存在
-      const flag = this.layout === 'inline-block' ? true : false;
-      if (flag) {
-        item.options.dropPos.left = 0;
-        item.options.dropPos.top = 0;
-      }
-      style.left = item.options.dropPos.left;
-      style.top = item.options.dropPos.top;
-    } else if (moveFlag) { // 允许拖动
-      item.options.dropPos = {
-        left: 0,
-        top: 0
-      };
-      style.left = item.options.dropPos.left;
-      style.top = item.options.dropPos.top;
-    }
-
-    // node节点的className与style的赋值
-    if (!item.options.nodeParam || typeof item.options.nodeParam !== 'object') {
-      item.options.nodeParam = {
-        className: '',
-        style: {},
-      }
-    }
-    if (typeof item.options.nodeParam === 'object' && typeof item.options.nodeParam.style === 'object') {
-      Object.assign(style, item.options.nodeParam.style);
-    }
-    let className = item.options.nodeParam.className
-    className = typeof className !== 'undefined' ? className : '';
-    // 被选中状态赋值，长度大于0表示选中状态
-    let lenSelector = this.selectNodes.filter((temp) => {
-      return temp.id === item.id;
-    }).length;
-
-    return {
-      style,
-      className,
-      lenSelector
     }
   }
 
@@ -435,7 +536,7 @@ export class VisionCanvasL extends React.Component {
         style,
         className,
         lenSelector
-      } = this.getClassOrStyle(item, moveFlag);
+      } = GetClassOrStyle(item, moveFlag, this);
 
       return (
         <div
@@ -443,14 +544,17 @@ export class VisionCanvasL extends React.Component {
           id={item.id}
           onMouseDown={(e) => {
             e.stopPropagation();
+            // 通知，属性栏要发送变化了
             this.VisionCanvasLBus.notify({
               options: item.options,
               id: item.id,
               type: 'canvas'
             });
+            // 当前被点击元素，是不是选中元素
             const len = this.selectNodes.filter((temp) => {
               return temp.id === item.id;
             });
+            // 如果被点击元素不是选中元素，先清除所有元素在加入元素
             if (len.length === 0) {
               this.clearSelectNodes();
               this.selectNodes = [item];
@@ -557,6 +661,16 @@ export class VisionCanvasL extends React.Component {
     }
   }
 
+  canvasLMove = (e) => {
+    // 框选的方法
+    this.setSelector(e, 'parent');
+    // 节点移动的方法
+    const event = e.nativeEvent;
+    this.mouseMove(event.clientX, event.clientY);
+    e.stopPropagation();
+    this.VisionCanvasLBus.pubSub.publish('canvas:mousemove', e);
+  }
+
   render() {
     const { width, height } = this.state;
     const { className, style } = this.props;
@@ -596,19 +710,46 @@ export class VisionCanvasL extends React.Component {
         // this.mouseUp(e);
         this.VisionCanvasLBus.pubSub.publish('canvas:mouseleave', e);
       }}
-      onMouseMove={(e) => {
-        this.setSelector(e, 'parent');
-        const event = e.nativeEvent;
-        this.mouseMove(event.clientX, event.clientY);
-        e.stopPropagation();
-        this.VisionCanvasLBus.pubSub.publish('canvas:mousemove', e);
-      }}
+      onMouseMove={(e) => { this.canvasLMove(e); }}
     >
       <canvas id="vision-canvas-l-canvas" />
       {this.draw()}
+      {this.itemPreview ? <div
+        onMouseUp={(e) => {
+          this.mouseUp(e);
+        }}
+        onMouseMove={(e) => {
+          this.setSelector(e);
+          const event = e.nativeEvent;
+          if (this.itemPreview && !this.moveObj) {
+            this.moveObj = {};
+            this.moveObj.move = {};
+            this.moveObj.item = {};
+            this.moveObj.move[this.itemPreview.id] = {
+              x: e.clientX,
+              y: e.clientY,
+              offsetLeft: this.itemPreview.options.dropPos.x,
+              offsetTop: this.itemPreview.options.dropPos.y
+            }
+            this.moveObj.item[this.itemPreview.id] = this.itemPreview;
+          }
+          this.mouseMove(event.clientX, event.clientY);
+          e.stopPropagation();
+          this.VisionCanvasLBus.pubSub.publish('node:mousemove', e);
+        }}
+        id={this.itemPreview.id}
+        className="vision-node-active vision-canvas-l-item-preview"
+        style={{
+          position: 'absolute',
+          left: this.itemPreview.options.dropPos.x,
+          top: this.itemPreview.options.dropPos.y
+        }}
+      >
+        {MyContainer(this.itemPreview.component, this.itemPreview.options, this.itemPreview.id)}
+      </div>
+        : null}
     </div>)
   }
-
 }
 
 

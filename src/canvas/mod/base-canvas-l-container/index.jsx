@@ -1,19 +1,28 @@
 import React from 'react';
 import { uuid } from '../../../util/index.js';
 import { VisionCanvasLBus, AssignToNew } from '../../../component-dispatch-center-bus/index.jsx';
-import { MyContainer } from '../../index.jsx';
+import { MyContainer, ParamReplenish, GetClassOrStyle } from '../../index.jsx';
 import './index.less';
 
-export class BaseCanvasLContainer extends React.Component{
+/**
+ * @description 是否允许出界的枚举值，只有visible才允许出界
+ */
+export const OverFlowEnum = ['hidden', 'auto', 'scroll', 'visible'];
+
+export class BaseCanvasLContainer extends React.Component {
     static defaultProps = {
-        nodeParam: {
-            width: 200, // 实际宽高值
-            height: 200, // 实际宽高值
+        dropPos: {
+            left: 0, // 距离外层容器的位置
+            top: 0, // 距离外层容器的位置
+        },
+        nodeParam: { // 预设属性
+            overflow: 0, // 必选参数，会被方法进行参数补全
             nodes: [],
             className: '',
             style: {
-                width: 200, // 样式宽高值
-                height: 200, // 样式宽高值，可能是px单位或百分比单位，或vw等单位
+                width: 200, //  必选参数，会被方法进行参数补全
+                height: 200, // 必选参数，会被方法进行参数补全
+                overflow: OverFlowEnum[0], // 必选参数，会被方法进行参数补全
             }
         },
         VisionCanvasLBus: undefined,
@@ -28,10 +37,35 @@ export class BaseCanvasLContainer extends React.Component{
         }
         this.VisionCanvasLBus = props.VisionCanvasLBus || VisionCanvasLBus;
         this.VisionCanvasLBus.addObserver(this);
+        this.selectNodes = [];
     }
 
-    static getDerivedStateFromProps(nextProps, prevState) {
-        debugger;
+    /**
+   * @description 将画布中的节点删除
+   * @param nodeId
+   * @return boolean true表示删除成功，false表示删除失败
+  */
+  removeNode(id) {
+    const { nodes } = this.state;
+    for (let i = 0; i < nodes.length; i++) {
+      if (nodes[i].id === id) {
+        nodes.splice(i, 1);
+        this.setState({
+          nodes,
+        });
+        return true;
+      }
+    }
+    console.log(`没有这个节点${id}，删除失败`);
+    return false;
+  }
+
+
+    componentWillUnmount() {
+        this.VisionCanvasLBus.removeObserver(this);
+    }
+    
+    static getDerivedStateFromProps(nextProps, prevState) { // 相当于执行一次setState(null) setState({...})
         if (nextProps.nodeParam.nodes !== prevState.nodes) {
             return {
                 nodes: nextProps.nodeParam.nodes
@@ -41,47 +75,85 @@ export class BaseCanvasLContainer extends React.Component{
     }
 
     update(options) {
-        console.log(options);
-    }
+        // 不处理自己发的，以及画布发的
+        if (options && options.type !== 'canvas') {
+          const { nodes } = this.state;
+          const len = nodes.filter((temp) => {
+            return temp.id === options.id;
+          });
+          if (len.length > 0) {
+            Object.assign(len[0].options, options.options);
+            debugger;
+            this.setState({
+              nodes: AssignToNew(nodes),
+            });
+          }
+        }
+      }
 
     draw() {
-        debugger
-        return this.state.nodes.map((item, index)=>{
-            return MyContainer(item.component, item.options, index)
+        return this.state.nodes.map((item, index) => {
+            const {
+                style,
+                className,
+            } = GetClassOrStyle(item, true, this);
+            return (
+                <div 
+                    onMouseDown={(e) => {
+                        e.stopPropagation();
+                        this.props.setSelectNodes(item);
+                        this.VisionCanvasLBus.notify({
+                            options: item.options,
+                            id: item.id,
+                            type: 'canvas'
+                        });
+                        this.id = item.id;
+                    }}
+                    onMouseMove={(e)=>{
+                        if (this.id) {
+                            this.removeNode(this.id);
+                            this.props.selectNodesMove(AssignToNew(item));
+                            this.id = null;
+                        }
+                        e.stopPropagation();
+                    }}
+                    key={item.id}
+                    id={item.id} 
+                    style={style} 
+                    className={["vision-node-border", className].join(' ')}>
+                        {MyContainer(item.component, item.options, index)}
+                </div>
+            );
         })
     }
 
-    getClassOrStyle() {
-        const { props } = this;
-        const { nodeParam, dropPos } = props;
-        let style = {};
-        if (!dropPos) {
-            dropPos = {};
-            dropPos.left = 0;
-            dropPos.top = 0;
-            style.left = dropPos.left;
-            style.right = dropPos.right;
-        }
-        if (!nodeParam || typeof nodeParam !== 'object') {
-            nodeParam = {
-              className: '',
-              style: {
-                  width: 200,
-                  height: 200,
-              },
-            }
-        }
-        if (typeof nodeParam === 'object' && typeof nodeParam.style === 'object') {
-            Object.assign(style, nodeParam.style);
-        }
-        let className = nodeParam.className
-        className = typeof className !== 'undefined' ? className : '';
-        return { className, style };
+    setHoverBackgroundColor(color, notColor) {
+        this.backgroundColor = color;
+        this.backgroundNotColor = notColor;
     }
 
     render() {
-        const { className, style } = this.getClassOrStyle();
-        return(<div style={style} className={["base-canvas-l-container", className].join(' ')}>
+        const { props } = this;
+        const { className, style } = ParamReplenish(this, props);
+        return (<div 
+            onMouseOver={(e)=>{
+                // 标记着他被选中
+                const flag = this.props.getMoveStatus(this.state.id);
+                if (flag) {
+                    e.currentTarget.style.backgroundColor = this.backgroundColor || 'rgba(255, 0, 0, 0.27)';
+                    e.stopPropagation();
+                }
+            }}
+            onMouseOut={(e)=>{
+                const flag = this.props.getMoveStatus(this.state.id);
+                if (flag === true && typeof flag !== 'object') {
+                    e.currentTarget.style.backgroundColor = this.backgroundNotColor || '';
+                    e.stopPropagation();
+                }
+            }}
+            id={props.id} 
+            style={style} 
+            className={["base-canvas-l-container", className].join(' ')}>
             {this.draw()}
         </div>);
     }

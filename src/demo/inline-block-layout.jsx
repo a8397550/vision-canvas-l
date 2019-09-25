@@ -134,8 +134,6 @@ class IndexTemplateContainer extends React.Component {
     const demoAAttribute = VisionCanvasLBus.getDefaultAttribute('DemoA');
     const demoBAttribute = VisionCanvasLBus.getDefaultAttribute('DemoB');
 
-    console.log('divA', divA, demoAAttribute);
-    console.log('divB', divB, demoBAttribute);
     VisionCanvasLBus.setAttribute(divA.id, demoAAttribute.options);
     VisionCanvasLBus.setAttribute(divB.id, demoBAttribute.options);
     
@@ -202,7 +200,6 @@ class IndexTemplateContainer extends React.Component {
                 VisionCanvasLBus.setAttribute(temp.id, attr.options);
               }
               
-              console.log('node:', temp);
             }}>
               <VisionCanvasL 
                 layout="inline-block"

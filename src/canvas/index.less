@@ -3,15 +3,33 @@
 }
 .vision-canvas-l {
     height: 100%;
+    
+    .vision-node-active {
+        border: 1px dashed #0070CC;
+    }
+
     .vision-node-border {
+        position: absolute;
         &:hover {
             border: 1px dashed #0070CC;
         }
-        position: absolute;
-        &.vision-node-active {
-            border: 1px dashed #0070CC;
+    }
+
+    .base-canvas-l-container {
+        position: relative;
+        border: 1px solid #0070CC;
+        &:hover{
+            border: none;
         }
     }
+    
+    .vision-node-active {
+        > .base-canvas-l-container {
+            border: none;
+        }
+    }
+
+
     &.vision-canvas-l-inline-block {
         .vision-node-border {
             position: relative;
