@@ -1,7 +1,6 @@
 import React from 'react';
-import { uuid } from '../../../util/index.js';
 import { VisionCanvasLBus, AssignToNew } from '../../../component-dispatch-center-bus/index.jsx';
-import { MyContainer, ParamReplenish, GetClassOrStyle } from '../../index.jsx';
+import { MyContainer, GetClassOrStyle } from '../../index.jsx';
 import './index.less';
 
 /**
@@ -114,8 +113,11 @@ export class BaseCanvasLContainer extends React.Component {
                             this.removeNode(this.id);
                             this.props.selectNodesMove(AssignToNew(item));
                             this.id = null;
+                            e.stopPropagation();
                         }
-                        e.stopPropagation();
+                    }}
+                    onMouseUp={()=>{
+                        this.id = null;
                     }}
                     key={item.id}
                     id={item.id} 
@@ -134,7 +136,6 @@ export class BaseCanvasLContainer extends React.Component {
 
     render() {
         const { props } = this;
-        const { className, style } = ParamReplenish(this, props);
         return (<div 
             onMouseOver={(e)=>{
                 // 标记着他被选中
@@ -152,8 +153,7 @@ export class BaseCanvasLContainer extends React.Component {
                 }
             }}
             id={props.id} 
-            style={style} 
-            className={["base-canvas-l-container", className].join(' ')}>
+            className={["base-canvas-l-container"].join(' ')}>
             {this.draw()}
         </div>);
     }

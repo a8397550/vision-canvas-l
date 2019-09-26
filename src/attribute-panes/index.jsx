@@ -62,6 +62,7 @@ export class AttributePanesVisionCanvasL extends React.Component {
         item.value = value !== undefined || value !== null ? value : item.value;
         item.index = index;
         item.onChange = (key, value) => {
+          console.log('value:', value)
           const { options: op } = this.state;
           let obj;
           const arr = key.split('.');
@@ -81,18 +82,20 @@ export class AttributePanesVisionCanvasL extends React.Component {
               }
             }
           }
+
           this.setState({
             options: op,
           }, () => {
             this.VisionCanvasLBus.notify({
               options: op,
               id: id,
+              type: 'attribute',
             });
           })
         }
 
         if (typeof item.type === 'function') {
-          return item.type(item);
+          return <div key={index}>{item.type(item)}</div>;
         }
         return null;
       })}

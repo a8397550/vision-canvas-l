@@ -21,7 +21,7 @@ import ColumnarBase from '../bizcharts/columnar/index.jsx';
 
 const { Option } = Select;
 
- function viewFn(props) {
+function viewFn(props) {
   return <div key={props.index}>
     <div>{props.title}</div>
     <div>
@@ -32,16 +32,17 @@ const { Option } = Select;
   </div>
 }
 
- function viewSelectFn(props) {
+
+function viewSelectFn(props) {
   const { attributeParam } = props;
   return <div key={props.index}>
     <div>{props.title}</div>
     <div>
-      <Select value={props.value} style={{ width: 120 }} onChange={(value)=>{
-        props.onChange('selectValue', value);
+      <Select value={props.value} style={{ width: 120 }} onChange={(value) => {
+        props.onChange(props.key, value);
       }}>
-        { 
-          attributeParam.options.map((item, index)=>{
+        {
+          attributeParam.options.map((item, index) => {
             return <Option key={index} value={item.code}>{item.name}</Option>
           })
         }
@@ -50,28 +51,27 @@ const { Option } = Select;
   </div>
 }
 
- function viewNumberFn(props) {
+function viewNumberFn(props) {
   return <div key={props.index}>
     <div>{props.title}</div>
     <div>
       <InputNumber value={props.value} onChange={(value) => {
-        console.log(value);
         props.onChange(props.key, value);
       }} />
     </div>
   </div>
 }
 
- function EventBus() {
+function EventBus() {
   this.listeners = [];
-  this.remove = function(eventName) {
+  this.remove = function (eventName) {
     const arr = this.listeners.filter((temp) => {
       return temp.eventName !== eventName;
     });
     this.listeners = arr;
   }
 
-  this.trigger = function(eventName, param) {
+  this.trigger = function (eventName, param) {
     this.listeners.forEach((item) => {
       if (eventName === item.eventName) {
         item.fn(param);
@@ -79,9 +79,9 @@ const { Option } = Select;
     })
   }
 
-  this.on = function(eventName, fn) {
+  this.on = function (eventName, fn) {
     this.listeners.push({
-      eventName, 
+      eventName,
       fn
     });
   }
@@ -89,14 +89,14 @@ const { Option } = Select;
 
 const event = new EventBus();
 
- class DemoA extends React.Component {
+class DemoA extends React.Component {
   updata(options) {
     console.log(options);
   }
   render() {
     const { title, selectValue } = this.props;
-    return (<div>{title}<br/>{selectValue}
-      <button onClick={()=>{
+    return (<div>{title}<br />{selectValue}
+      <button onClick={() => {
         event.trigger('click', {
           a: 1,
         });
@@ -107,7 +107,7 @@ const event = new EventBus();
 
 const { TextArea } = Input;
 
- class Text extends React.Component {
+class Text extends React.Component {
   static defaultProps = {
     placeholder: undefined,
     autosize: {
@@ -121,22 +121,22 @@ const { TextArea } = Input;
       text: props.text,
     }
   }
-  render(){
+  render() {
     const { text } = this.state;
     const { props } = this;
     return (<TextArea
       value={text}
-      onDoubleClick={(e)=>{
+      onDoubleClick={(e) => {
         e.preventDefault();
         e.stopPropagation();
         e.target.focus();
       }}
-      onChange={(e)=>{
+      onChange={(e) => {
         this.setState({
           text: e.target.value,
         });
       }}
-      onBlur={(e)=>{
+      onBlur={(e) => {
         VisionCanvasLBus.notify({
           options: {
             text: e.target.value,
@@ -150,7 +150,7 @@ const { TextArea } = Input;
   }
 }
 
- class DemoB extends React.Component {
+class DemoB extends React.Component {
   constructor(props) {
     super(props);
     console.log('实验重绘');
@@ -158,8 +158,8 @@ const { TextArea } = Input;
   updata(options) {
     console.log(options);
   }
-  componentDidMount(){
-    event.on('click', function(data){
+  componentDidMount() {
+    event.on('click', function (data) {
       console.log(data);
     });
   }
@@ -177,39 +177,41 @@ VisionCanvasLBus.registerComponent(Text, 'Text');
 VisionCanvasLBus.registerComponent(BaseCanvasLContainer, 'BaseCanvasLContainer');
 
 VisionCanvasLBus.registerComponentAttribute('BaseCanvasLContainer', [
-{
-  type: viewSelectFn,
-  title: 'select的演示',
-  key: 'selectValue',
-  attributeParam: {
-    options: [
-      { name: 'a1', code: '1' },
-      { name: 'a2', code: '2' },
-    ]
+  {
+    type: viewSelectFn,
+    title: '超出边界的展示方式',
+    key: 'nodeParam.style.overflow',
+    attributeParam: {
+      options: [
+        { name: '超出裁剪', code: 'hidden' },
+        { name: '自动', code: 'auto' },
+        { name: '滚动条', code: 'scroll' },
+        { name: '超出可见', code: 'visible' },
+      ]
+    }
+  },
+  {
+    type: viewNumberFn,
+    title: 'left',
+    key: 'dropPos.left'
+  },
+  {
+    type: viewNumberFn,
+    title: 'top',
+    key: 'dropPos.top'
+  },
+  {
+    type: viewFn,
+    title: 'width',
+    key: 'nodeParam.style.width',
+    value: 200
+  },
+  {
+    type: viewFn,
+    title: 'height',
+    key: 'nodeParam.style.height',
+    value: 200
   }
-},
-{
-  type: viewNumberFn,
-  title: 'left',
-  key: 'dropPos.left'
-},
-{
-  type: viewNumberFn,
-  title: 'top',
-  key: 'dropPos.top'
-},
-{
-  type: viewNumberFn,
-  title: 'width',
-  key: 'nodeParam.style.width',
-  value: 200
-},
-{
-  type: viewNumberFn,
-  title: 'height',
-  key: 'nodeParam.style.height',
-  value: 200
-}
 ]);
 // VisionCanvasLBus.registerComponent(); // 测试 throw抛出异常
 VisionCanvasLBus.registerComponentAttribute('DemoA', [{
@@ -261,34 +263,34 @@ VisionCanvasLBus.registerComponentAttribute('DemoB', [{
 export function ViewNode(_item, index, onFn) {
   return (<div className="viewNode" key={_item.id} style={{ position: 'relative' }}>
     <span className="title" title={_item.title}>
-        <span style={{ display: _item.id !== index ? 'inline-block' : 'none' }}>{_item.title}</span>
-        <input type="text" 
-          className={['input', _item.id === index ? '' : 'none'].join(' ')}
-          onBlur={(e) => {
-            const dom = e.target;
-            onFn(function (self, i, j) {
-              const { arr } = self.state;
-              if (dom.value.length !== 0) {
-                arr[i].children[j].title = dom.value;
-              }
-              self.setState({
-                arr,
-                index: '---',
-              });
+      <span style={{ display: _item.id !== index ? 'inline-block' : 'none' }}>{_item.title}</span>
+      <input type="text"
+        className={['input', _item.id === index ? '' : 'none'].join(' ')}
+        onBlur={(e) => {
+          const dom = e.target;
+          onFn(function (self, i, j) {
+            const { arr } = self.state;
+            if (dom.value.length !== 0) {
+              arr[i].children[j].title = dom.value;
+            }
+            self.setState({
+              arr,
+              index: '---',
             });
-            
-          }} 
-        /> 
-      </span> 
-      <i className="icon-edit"
-        onClick={(e) => {
-        onFn(function (self){
+          });
+
+        }}
+      />
+    </span>
+    <i className="icon-edit"
+      onClick={(e) => {
+        onFn(function (self) {
           self.setState({
             index: _item.id
           });
           const com = e.target;
           let pervDom = com;
-          while(pervDom.className !== 'icon-edit') {
+          while (pervDom.className !== 'icon-edit') {
             pervDom = pervDom.parentElement;
           }
           pervDom = pervDom.previousElementSibling.lastElementChild;
@@ -331,7 +333,7 @@ class IndexTemplateContainer extends React.Component {
             options: { title: '666' }
           },
         ]
-      },{
+      }, {
         elementId: 4,
         title: '容器',
         children: [
@@ -350,8 +352,8 @@ class IndexTemplateContainer extends React.Component {
             id: '3-1',
             title: '柱状图-图表',
             componentName: 'ColumnarBaseA',
-            options: { 
-              title: '666', 
+            options: {
+              title: '666',
               nodeParam: {
                 className: 'aaa',
               }
@@ -392,12 +394,12 @@ class IndexTemplateContainer extends React.Component {
       }]
     };
     this.VisionCanvasL = {};
-    
+
   }
 
   componentWillUnmount() {
     VisionCanvasLBus.componentPanes = [];
-  } 
+  }
 
   componentDidMount() {
     const divA = this.VisionCanvasL.addNode({
@@ -429,13 +431,13 @@ class IndexTemplateContainer extends React.Component {
 
     VisionCanvasLBus.setAttribute(divA.id, demoAAttribute.options);
     VisionCanvasLBus.setAttribute(divB.id, demoBAttribute.options);
-    
+
     const collapseList = [];
     // 注册主键面板
     const { arr } = this.state;
     arr.forEach((item) => {
       collapseList.push(item.elementId);
-      item.children.forEach((_item)=> {
+      item.children.forEach((_item) => {
         VisionCanvasLBus.registerComponentPanes({
           componentName: _item.componentName,
           ViewNode: ViewNode,
@@ -450,24 +452,24 @@ class IndexTemplateContainer extends React.Component {
     });
 
   }
-  
+
   render() {
     const { collapseList, arr, index } = this.state;
-    const dom = arr.map((item, i)=>{
+    const dom = arr.map((item, i) => {
       const panesArr = VisionCanvasLBus.getGroupPanes(item.elementId);
       return (<Panel header={item.title} key={item.elementId}>
-      {
-        panesArr.map((_item, ind) => <ComponentNodeDom key={_item.componentPanesId} options={{
-          ViewNode: _item.ViewNode(item.children[ind], index, (fn) => fn(this, i, ind)),
-          componentName: _item.componentName,
-          options: _item.componentParam,
-          data: _item
-        }}  />)
-      }
+        {
+          panesArr.map((_item, ind) => <ComponentNodeDom key={_item.componentPanesId} options={{
+            ViewNode: _item.ViewNode(item.children[ind], index, (fn) => fn(this, i, ind)),
+            componentName: _item.componentName,
+            options: _item.componentParam,
+            data: _item
+          }} />)
+        }
       </Panel>)
     })
     return (
-      <div className="vision-canvas-demo-container"> 
+      <div className="vision-canvas-demo-container">
         <div className="vision-canvas-demo">
           <div className="vision-canvas-l-left">
             <ComponentPanesVisionCanvasL>
@@ -475,7 +477,7 @@ class IndexTemplateContainer extends React.Component {
                 bordered={false}
                 activeKey={collapseList}
                 key="componentCollapse"
-                onChange={(key)=>{
+                onChange={(key) => {
                   this.setState({
                     collapseList: key,
                   });
@@ -486,20 +488,20 @@ class IndexTemplateContainer extends React.Component {
             </ComponentPanesVisionCanvasL>
           </div>
           <div className="vision-canvas-l-conter" style={{ border: '1px solid #ccc' }}>
-            <ComponentDropContainer addNode={(node)=>{
+            <ComponentDropContainer addNode={(node) => {
               const temp = this.VisionCanvasL.addNode(node);
               const attr = VisionCanvasLBus.getDefaultAttribute(temp.componentName);
               if (attr) {
                 VisionCanvasLBus.setAttribute(temp.id, attr.options);
               }
-              
+
             }}>
-              <VisionCanvasL 
-                ref={(refCanvas)=>{
+              <VisionCanvasL
+                ref={(refCanvas) => {
                   if (refCanvas) {
                     this.VisionCanvasL = refCanvas;
                   }
-                }} 
+                }}
               />
             </ComponentDropContainer>
           </div>

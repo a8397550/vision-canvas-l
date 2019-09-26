@@ -3,6 +3,9 @@
 }
 .vision-canvas-l {
     height: 100%;
+    * {
+        user-select: none;
+    }
     
     .vision-node-active {
         border: 1px dashed #0070CC;
@@ -18,6 +21,8 @@
     .base-canvas-l-container {
         position: relative;
         border: 1px solid #0070CC;
+        width: 100%;
+        height: 100%;
         &:hover{
             border: none;
         }
