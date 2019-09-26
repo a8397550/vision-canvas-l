@@ -7,6 +7,7 @@ import { VisionCanvasLBus } from '../component-dispatch-center-bus/index.jsx';
 // 画布组件
 import { VisionCanvasL } from '../canvas/index.jsx';
 import { BaseCanvasLContainer } from '../canvas/mod/base-canvas-l-container/index.jsx';
+import { LineCanvasLContainer } from '../canvas/mod/line-canvas-l-container/index.jsx'
 import { ComponentDropContainer } from '../react-dnd/drop-container.jsx';
 import { DragDropContext } from 'react-dnd';
 import HTML5Backend from 'react-dnd-html5-backend';
@@ -175,8 +176,9 @@ VisionCanvasLBus.registerComponent(DemoB, 'DemoB');
 VisionCanvasLBus.registerComponent(ColumnarBase, 'ColumnarBaseA');
 VisionCanvasLBus.registerComponent(Text, 'Text');
 VisionCanvasLBus.registerComponent(BaseCanvasLContainer, 'BaseCanvasLContainer');
+VisionCanvasLBus.registerComponent(LineCanvasLContainer, 'LineCanvasLContainer');
 
-VisionCanvasLBus.registerComponentAttribute('BaseCanvasLContainer', [
+const BaseCanvasContainerAttribute = [
   {
     type: viewSelectFn,
     title: '超出边界的展示方式',
@@ -206,6 +208,16 @@ VisionCanvasLBus.registerComponentAttribute('BaseCanvasLContainer', [
     key: 'nodeParam.style.width',
     value: 200
   },
+  {
+    type: viewFn,
+    title: 'height',
+    key: 'nodeParam.style.height',
+    value: 200
+  }
+];
+
+VisionCanvasLBus.registerComponentAttribute('BaseCanvasLContainer', BaseCanvasContainerAttribute);
+VisionCanvasLBus.registerComponentAttribute('LineCanvasLContainer', [
   {
     type: viewFn,
     title: 'height',
@@ -341,6 +353,11 @@ class IndexTemplateContainer extends React.Component {
             id: '3-1',
             title: '基本容器',
             componentName: 'BaseCanvasLContainer',
+          },
+          {
+            id: '3-1',
+            title: '占位容器',
+            componentName: 'LineCanvasLContainer',
           }
         ]
       },

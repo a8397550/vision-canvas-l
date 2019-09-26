@@ -4,7 +4,7 @@ import { VisionCanvasLBus, AssignToNew } from '../component-dispatch-center-bus/
 import './index.less';
 import { BaseCanvasLContainer, OverFlowEnum } from './mod/base-canvas-l-container/index.jsx';
 
-function Verification(_style, _key, item) {
+export function Verification(_style, _key, item) {
   if (typeof _style[_key] !== 'number') {
     if ((/\D/g).test(_style[_key])) {
       const regExp = /^[0-9]*\.?[0-9]+(p|px|%)?$/
@@ -14,10 +14,9 @@ function Verification(_style, _key, item) {
           _style[_key] = parseInt(_style[_key], 10);
         }
       } else {
-        if (item.component instanceof BaseCanvasLContainer ||
-          item.component === BaseCanvasLContainer ||
-          item instanceof BaseCanvasLContainer) {
-            _style[_key] = _worh;
+        if ((new item.component) instanceof BaseCanvasLContainer ||
+          item.component === BaseCanvasLContainer) {
+          _style[_key] = _worh;
         } else {
           delete _style[_key];
         }
@@ -35,7 +34,7 @@ export function ParamReplenish(node, props) {
   let style = {};
   let className = '';
   const _worh = 200;
-  if (node.component instanceof BaseCanvasLContainer || node.component === BaseCanvasLContainer || node instanceof BaseCanvasLContainer) {
+  if ((new node.component) instanceof BaseCanvasLContainer || node.component === BaseCanvasLContainer) {
     let { nodeParam, dropPos } = props;
     if (!dropPos) {
       props.dropPos = {};
@@ -88,7 +87,6 @@ export const MyContainer = (WrappedComponent, options, index) => <WrappedCompone
 
 export function GetClassOrStyle(item, moveFlag, self) {
   let style = {};
-  const _worh = 200;
   if (moveFlag && item.options.dropPos) { // 允许拖动，并且定位属性存在
     const flag = self.layout === 'inline-block' ? true : false;
     if (flag) {
@@ -124,10 +122,10 @@ export function GetClassOrStyle(item, moveFlag, self) {
   }).length;
   Verification(style, 'width', item);
   Verification(style, 'height', item);
+  className.concat(lenSelector ? ' vision-node-active' : '')
   return {
     style,
     className,
-    lenSelector
   }
 }
 
@@ -240,7 +238,8 @@ export class VisionCanvasL extends React.Component {
       node.id = uuid();
       node.options.id = node.id;
       // 给容器加入方法
-      if (node.component instanceof BaseCanvasLContainer || node.component === BaseCanvasLContainer) {
+      if ((new node.component) instanceof BaseCanvasLContainer ||
+        node.component === BaseCanvasLContainer) {
         node.options.setSelectNodes = this.setSelectNodes;
         node.options.selectNodesMove = this.selectNodesMove;
         node.options.getMoveStatus = this.getMoveStatus;
@@ -261,12 +260,35 @@ export class VisionCanvasL extends React.Component {
       this.setState({
         nodes: AssignToNew(nodes),
       }, () => {
-        // console.log(this.state.nodes);
       });
 
       return node;
     }
     throw "添加组件异常，没有component"
+  }
+
+  setXorYvalue(containerBool, node) {
+    let nodes;
+    if (!containerBool) {
+      nodes = this.state.nodes;
+    } else {
+      nodes = node.options.nodeParam.nodes;
+    }
+    for (let i = 0; i < nodes.length; i += 1) {
+      const item = nodes[i];
+      if ((new item.component) instanceof BaseCanvasLContainer ||
+        item.component === BaseCanvasLContainer) {
+        if (containerBool) {
+          item.options.dropPos.x = (node.options.dropPos.x || node.options.dropPos.left) + item.options.dropPos.left;
+          item.options.dropPos.y = (node.options.dropPos.y || node.options.dropPos.top) + item.options.dropPos.top;
+        }
+        this.setXorYvalue(true, item);
+      }
+      if (containerBool) {
+        item.options.dropPos.x = (node.options.dropPos.x || node.options.dropPos.left) + item.options.dropPos.left;
+        item.options.dropPos.y = (node.options.dropPos.y || node.options.dropPos.top) + item.options.dropPos.top;
+      }
+    }
   }
 
   /**
@@ -282,7 +304,7 @@ export class VisionCanvasL extends React.Component {
     for (let i = nodes.length - 1; i >= 0; i -= 1) {
       const item = nodes[i];
       const options = item.options;
-      const componentFlag = item.component instanceof BaseCanvasLContainer || item.component === BaseCanvasLContainer
+      const componentFlag = (new item.component) instanceof BaseCanvasLContainer || item.component === BaseCanvasLContainer
       if (componentFlag) {
         let bool;
         // containerBool 是false的情况下，表明当前是根元素，就不考虑可视区域的问题
@@ -302,7 +324,7 @@ export class VisionCanvasL extends React.Component {
           (options.dropPos.x || options.dropPos.left) + dom.clientWidth, // 组件的右下角x
           (options.dropPos.y || options.dropPos.top) + dom.clientHeight, // 组件的右下角y
         ];
-        
+
         bool = this.nodeAddTimeWithinLimits({
           x: node.options.dropPos.left,
           y: node.options.dropPos.top,
@@ -399,7 +421,6 @@ export class VisionCanvasL extends React.Component {
         return true;
       }
     }
-    console.log(`没有这个节点${id}，删除失败`);
     return false;
   }
 
@@ -481,6 +502,15 @@ export class VisionCanvasL extends React.Component {
     }
     if (this.moveObj && !this.itemPreview) {
       const len = Object.keys(this.moveObj.item);
+      // 判断this.moveObj.item被移动对象是不是一个容器，如果是一个容器的化，需要做重新定位处理
+      for (let i = 0; i < len.length; i += 1) {
+        const item = this.moveObj.item[len[i]];
+        const componentFlag = (new item.component) instanceof BaseCanvasLContainer || item.component === BaseCanvasLContainer;
+        if (componentFlag) {
+          this.setXorYvalue(false);
+          break;
+        }
+      }
       if (len.length === 1) {
         const { nodes } = this.state;
         const bool = this.containerAdd(nodes, this.moveObj.item[len[0]], false, undefined);
@@ -553,6 +583,7 @@ export class VisionCanvasL extends React.Component {
       });
       if (len.length > 0) {
         Object.assign(len[0].options, options.options);
+        this.setXorYvalue();
         this.setState({
           nodes: AssignToNew(nodes),
         });
@@ -572,7 +603,6 @@ export class VisionCanvasL extends React.Component {
       const {
         style,
         className,
-        lenSelector
       } = GetClassOrStyle(item, moveFlag, this);
 
       return (
@@ -628,7 +658,7 @@ export class VisionCanvasL extends React.Component {
             this.VisionCanvasLBus.pubSub.publish('node:mouseup', e);
           }}
           style={style}
-          className={["vision-node-border", className, lenSelector ? 'vision-node-active' : ''].join(' ')}>{MyContainer(item.component, item.options, index)}</div>
+          className={["vision-node-border", className].join(' ')}>{MyContainer(item.component, item.options, index)}</div>
       )
     });
   }
@@ -778,7 +808,7 @@ export class VisionCanvasL extends React.Component {
         }}
         id={this.itemPreview.id}
         className="vision-node-active vision-canvas-l-item-preview"
-        style={Object.assign({}, this.itemPreview.options.nodeParam.style,{
+        style={Object.assign({}, this.itemPreview.options.nodeParam.style, {
           position: 'absolute',
           left: this.itemPreview.options.dropPos.x,
           top: this.itemPreview.options.dropPos.y,
