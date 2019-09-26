@@ -296,16 +296,12 @@ export class VisionCanvasL extends React.Component {
           }
         }
         const dom = document.getElementById(item.id);
-        if (!dom) {
-          debugger;
-        }
         const [x, y, x1, y1] = [
           options.dropPos.x || options.dropPos.left, // 组件的左上角x
           options.dropPos.y || options.dropPos.top, // 组件的左上角y
           (options.dropPos.x || options.dropPos.left) + dom.clientWidth, // 组件的右下角x
           (options.dropPos.y || options.dropPos.top) + dom.clientHeight, // 组件的右下角y
-        ]
-        console.log(x,y,x1,y1);
+        ];
         
         bool = this.nodeAddTimeWithinLimits({
           x: node.options.dropPos.left,
@@ -483,7 +479,6 @@ export class VisionCanvasL extends React.Component {
         }
       }
     }
-    debugger;
     if (this.moveObj && !this.itemPreview) {
       const len = Object.keys(this.moveObj.item);
       if (len.length === 1) {
