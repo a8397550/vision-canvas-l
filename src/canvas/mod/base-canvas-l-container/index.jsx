@@ -1,6 +1,6 @@
 import React from 'react';
 import { VisionCanvasLBus, AssignToNew } from '../../../component-dispatch-center-bus/index.jsx';
-import { MyContainer, GetClassOrStyle } from '../../index.jsx';
+import { GetClassOrStyle, ParamReplenish } from '../../index.jsx';
 import { BaseNode } from '../base-node/index.jsx';
 /**
  * @description 是否允许出界的枚举值，只有visible才允许出界
@@ -32,10 +32,11 @@ export class BaseCanvasLContainer extends React.Component {
     if (props === undefined) {
       return;
     }
+    const nodes = props.nodeParam ? props.nodeParam.nodes : [];
     this.state = {
-      nodes: props.nodeParam.nodes || [],
+      nodes: nodes || [],
       id: props.id,
-      className: 'base-canvas-l-container'
+      className: 'canvas-l-container-node',
     }
     this.VisionCanvasLBus = props.VisionCanvasLBus || VisionCanvasLBus;
     this.VisionCanvasLBus.addObserver(this);
@@ -91,9 +92,8 @@ export class BaseCanvasLContainer extends React.Component {
     }
   }
 
-  baseNodeMouseDown = (e) => {
+  baseNodeMouseDown = (e, item) => {
     e.stopPropagation();
-    this.props.setSelectNodes(item);
     this.VisionCanvasLBus.notify({
       options: item.options,
       id: item.id,
@@ -102,7 +102,7 @@ export class BaseCanvasLContainer extends React.Component {
     this.id = item.id;
   }
 
-  baseNodeMouseMove = (e) => {
+  baseNodeMouseMove = (e, item) => {
     if (this.id) {
       this.rootMouseOut(e);
       this.removeNode(this.id);
@@ -112,7 +112,7 @@ export class BaseCanvasLContainer extends React.Component {
     }
   }
 
-  baseNodeMouseUp = (e) => {
+  baseNodeMouseUp = () => {
     this.id = null;
   }
 
@@ -123,9 +123,10 @@ export class BaseCanvasLContainer extends React.Component {
         className,
       } = GetClassOrStyle(item, true, this);
       return BaseNode({
-        mouseDown: this.baseNodeMouseDown,
-        mouseMove: this.baseNodeMouseMove,
+        mouseDown: (e) => { this.baseNodeMouseDown(e, item); },
+        mouseMove: (e) => { this.baseNodeMouseMove(e, item); },
         mouseUp: this.baseNodeMouseUp,
+        selectChecked: (e) => { this.props.setSelectNodesChecked(e, item) },
         id: item.id,
         style,
         className,
@@ -167,7 +168,9 @@ export class BaseCanvasLContainer extends React.Component {
       onMouseOver={this.rootMouseOver}
       onMouseOut={this.rootMouseOut}
       id={props.id}
-      className={[this.state.className].join(' ')}>
+      className={this.state.className}
+      style={{overflow: OverFlowEnum[props.nodeParam.overflow]}}
+      >
       {this.draw()}
     </div>);
   }

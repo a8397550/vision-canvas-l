@@ -336,7 +336,7 @@ class IndexTemplateContainer extends React.Component {
             id: '0-1',
             title: 'DemoA',
             componentName: 'DemoA',
-            options: { title: '666' }
+            options: { title: '666', nodeParam: { className: "aaa", style: { color: 'red' }} }
           },
           {
             id: '0-2',
@@ -419,35 +419,35 @@ class IndexTemplateContainer extends React.Component {
   }
 
   componentDidMount() {
-    const divA = this.VisionCanvasL.addNode({
-      componentName: 'DemoA',
-      options: {
-        title: 'DemeA--',
-        dropPos: {
-          left: 10,
-          top: 10
-        },
-        nodeParam: {
-          className: 'aaa',
-          style: {
-            color: 'red',
-          }
-        }
-      }
-    });
+    // const divA = this.VisionCanvasL.addNode({
+    //   componentName: 'DemoA',
+    //   options: {
+    //     title: 'DemeA--',
+    //     dropPos: {
+    //       left: 10,
+    //       top: 10
+    //     },
+    //     nodeParam: {
+    //       className: 'aaa',
+    //       style: {
+    //         color: 'red',
+    //       }
+    //     }
+    //   }
+    // });
 
-    const divB = this.VisionCanvasL.addNode({
-      componentName: 'DemoB',
-      options: {
-        title: 'DemoB--',
-      }
-    });
+    // const divB = this.VisionCanvasL.addNode({
+    //   componentName: 'DemoB',
+    //   options: {
+    //     title: 'DemoB--',
+    //   }
+    // });
 
-    const demoAAttribute = VisionCanvasLBus.getDefaultAttribute('DemoA');
-    const demoBAttribute = VisionCanvasLBus.getDefaultAttribute('DemoB');
+    // const demoAAttribute = VisionCanvasLBus.getDefaultAttribute('DemoA');
+    // const demoBAttribute = VisionCanvasLBus.getDefaultAttribute('DemoB');
 
-    VisionCanvasLBus.setAttribute(divA.id, demoAAttribute.options);
-    VisionCanvasLBus.setAttribute(divB.id, demoBAttribute.options);
+    // VisionCanvasLBus.setAttribute(divA.id, demoAAttribute.options);
+    // VisionCanvasLBus.setAttribute(divB.id, demoBAttribute.options);
 
     const collapseList = [];
     // 注册主键面板
