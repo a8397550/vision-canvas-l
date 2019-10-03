@@ -1,10 +1,10 @@
 
-import React from 'react';
-import ReactDOM from 'react-dom';
+import * as React from 'react';
+import * as ReactDOM from 'react-dom';
 import '@babel/polyfill';
 import { Route, HashRouter, Switch } from 'react-router-dom';
-import { InlineIndexTemplate } from './demo/inline-block-layout.jsx';
-import { IndexTemplate } from './demo/absolute-layout.jsx';
+import { InlineIndexTemplate } from './demo/inline-block-layout';
+import { IndexTemplate } from './demo/absolute-layout';
 
 ReactDOM.render(
     <HashRouter>

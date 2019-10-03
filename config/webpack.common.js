@@ -6,8 +6,9 @@ const webpack = require('webpack');
 
 module.exports = {
     entry: {
-        app: path.join(__dirname, '../src/index.jsx'),
+        app: path.join(__dirname, '../src/index.tsx'),
     },
+    devtool: 'inline-source-map', // 站点地图，可以输出错误发生所在地
     plugins: [
         new CleanWebpackPlugin(['dist']),
         new HtmlWebpackPlugin({
@@ -17,6 +18,13 @@ module.exports = {
         }),
         new webpack.HotModuleReplacementPlugin()
     ],
+
+    resolve: {
+        
+        extensions: [".ts", ".tsx", ".js", ".jsx"]
+    
+    },
+
     output: {
         filename: '[name].bundle.js',
         path: path.resolve(__dirname, 'dist'),
@@ -31,6 +39,7 @@ module.exports = {
                   loader: 'babel-loader',
                 },
             },
+            { test: /\.(tsx|ts)?$/, loader: "ts-loader" },
             {
                 test: /\.less$/,
                 loader: 'style-loader!css-loader!less-loader'
@@ -65,6 +74,15 @@ module.exports = {
                 use: [
                     'xml-loader'
                 ]
+            },
+            {
+                test: /\.(js|ts|jsx|tsx)$/,
+                loader: 'eslint-loader',
+                enforce: "pre",
+                include: [path.resolve(__dirname, '../src')], // 指定检查的目录
+                options: { // 这里的配置项参数将会被传递到 eslint 的 CLIEngine 
+                    formatter: require('eslint-friendly-formatter') // 指定错误报告的格式规范
+                }
             }
         ],
     }

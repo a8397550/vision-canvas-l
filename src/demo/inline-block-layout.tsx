@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react';
 import { Collapse } from 'antd';
 const { Panel } = Collapse;
 // 控制中心
