@@ -13,7 +13,9 @@ import HTML5Backend from 'react-dnd-html5-backend';
 import { ComponentPanesVisionCanvasL } from '../component-panes/index.jsx';
 import { ComponentNodeDom } from '../react-dnd/drag-node.jsx';
 // 属性面板
-import { AttributePanesVisionCanvasL } from '../attribute-panes/index.jsx'
+import { AttributePanesVisionCanvasL } from '../attribute-panes/index.jsx';
+// eventBus
+import {eventBus} from '../component-dispatch-center-bus/eventBus.jsx';
 import '../index.less';
 // bizcharts 柱状图
 import ColumnarBase from '../bizcharts/columnar/index.jsx';
@@ -60,33 +62,6 @@ function viewNumberFn(props) {
   </div>
 }
 
-function EventBus() {
-  this.listeners = [];
-  this.remove = function(eventName) {
-    const arr = this.listeners.filter((temp) => {
-      return temp.eventName !== eventName;
-    });
-    this.listeners = arr;
-  }
-
-  this.trigger = function(eventName, param) {
-    this.listeners.forEach((item) => {
-      if (eventName === item.eventName) {
-        item.fn(param);
-      }
-    })
-  }
-
-  this.on = function(eventName, fn) {
-    this.listeners.push({
-      eventName, 
-      fn
-    });
-  }
-}
-
-export const event = new EventBus();
-
 class DemoA extends React.Component {
   updata(options) {
     console.log(options);
@@ -95,7 +70,7 @@ class DemoA extends React.Component {
     const { title, selectValue } = this.props;
     return (<div>{title}<br/>{selectValue}
       <button onClick={()=>{
-        event.trigger('click', {
+        eventBus.trigger('click', {
           a: 1,
         });
       }}>按钮</button>
@@ -157,7 +132,7 @@ class DemoB extends React.Component {
     console.log(options);
   }
   componentDidMount(){
-    event.on('click', function(data){
+    eventBus.on('click', function(data){
       console.log(data);
     });
   }
@@ -173,6 +148,8 @@ VisionCanvasLBus.registerComponent(DemoB, 'DemoB');
 VisionCanvasLBus.registerComponent(ColumnarBase, 'ColumnarBaseA');
 VisionCanvasLBus.registerComponent(Text, 'Text');
 // VisionCanvasLBus.registerComponent(); // 测试 throw抛出异常
+
+// 基础属性面板注册，设置预设值
 VisionCanvasLBus.registerComponentAttribute('DemoA', [{
   type: viewFn,
   title: 'DemoA的标题名',
@@ -218,7 +195,6 @@ VisionCanvasLBus.registerComponentAttribute('DemoB', [{
 }
 ]);
 
-
 function ViewNode(_item, index, onFn) {
   return (<div className="viewNode" key={_item.id} style={{ position: 'relative' }}>
     <span className="title" title={_item.title}>
@@ -258,7 +234,6 @@ function ViewNode(_item, index, onFn) {
           pervDom.select();
         });
       }} ><Icon type="edit" /></i>
-
   </div>)
 }
 
@@ -379,7 +354,7 @@ class IndexTemplateContainer extends React.Component {
     VisionCanvasLBus.setAttribute(divB.id, demoBAttribute.options);
     
     const collapseList = [];
-    // 注册主键面板
+    // 注册组键面板
     const { arr } = this.state;
     arr.forEach((item) => {
       collapseList.push(item.elementId);
