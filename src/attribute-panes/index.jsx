@@ -12,6 +12,7 @@ export class AttributePanesVisionCanvasL extends React.Component {
   }
 
   update(options) {
+    console.log(options.options);
     this.setState({
       options: options.options,
       id: options.id
@@ -52,6 +53,9 @@ export class AttributePanesVisionCanvasL extends React.Component {
     }
     return (<div>
       {op.map((item, index) => {
+        if (item.event) {
+          // debugger;
+        }
         const value = this.getValue(item.key, options);
         item.value = value;
         item.index = index;

@@ -155,8 +155,10 @@ export function VisionCanvasLComponentDispatchCenterBus() {
           if (temp.attributeParam) {
             temp.attributeParam = AssignToNew(temp.attributeParam);
           }
+          const key = temp.event ? `${temp.key}___event` : temp.key;
           arr.push({
-            key: temp.key, // 必填，可以是key | key.key.key的形式
+            event: temp.event,
+            key: key, // 必填，可以是key | key.key.key的形式
             type: temp.type || 'text', // JSX.Element 如果传入text会自动渲染一个<Input type="text" /> 允许传入一个自定义的JSX.Element, 不传默认是 'text'
             title: temp.title || '', // options.title | JSX.Element
             id: temp.id || '',
