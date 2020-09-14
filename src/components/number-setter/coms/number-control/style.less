@@ -1,0 +1,119 @@
+@import "./ve-less-variables.less";
+
+.ve-number-control {
+  width: 100%;
+  position: relative;
+  box-sizing: border-box;
+  background: transparent;
+  height: 28px;
+  border-radius: @global-border-radius;
+  border: 1px solid var(--color-field-border, @normal-alpha-5);
+  &:hover {
+    border-color: var(--color-field-border-hover, @normal-alpha-4);
+  }
+  &.ve-focused {
+    border-color: var(--color-field-border-active, @normal-alpha-3);
+  }
+  &.ve-invalid {
+    border-color: var(--color-function-warning, @brand-warning);
+  }
+
+  > input.ve-input {
+    box-sizing: border-box;
+    padding: 4px 4px;
+    display: block;
+    font-size: 12px;
+    font-family: @font-family;
+    border: 0;
+    margin: 0;
+    background: transparent;
+    color: var(--color-text, @dark-alpha-3);
+    outline: none;
+    height: 28px;
+    line-height: 28px;
+    width: e("calc(100% - 14px)");
+    &::-webkit-input-placeholder {
+      color: var(--color-field-placeholder, @normal-alpha-5);
+    }
+  }
+  &.ve-has-units > .ve-input {
+    width: e("calc(100% - 28px)");
+  }
+  .ve-units {
+    position: absolute;
+    right: 14px;
+    top: 2px;
+    background: var(--color-block-background-light, @normal-alpha-9);
+    bottom: 2px;
+    border-radius: @global-border-radius;
+    .ve-units-selected {
+      display: inline-flex;
+      height: 100%;
+      text-transform: lowercase;
+      padding: 0 4px;
+      color: var(--color-text, @dark-alpha-3);
+      font-family: Monaco, monospace;
+      font-size: 12px;
+      align-items: center;
+      cursor: pointer;
+    }
+  }
+  .ve-ticks {
+    box-sizing: border-box;
+    position: absolute;
+    top: 0;
+    right: 0;
+    .ve-tick {
+      box-sizing: border-box;
+      display: block;
+      font-size: 12px;
+      color: var(--color-text, @dark-alpha-3);
+      line-height: 12px;
+      text-align: center;
+      font-style: normal;
+      padding: 0 1px;
+      cursor: pointer;
+      &:hover {
+        background: var(--color-block-background-light, @normal-alpha-9);
+      }
+      &.ve-tick-up {
+        &:after {
+          content: '\25B2';
+          display: inline-block;
+          transform: scale(.8, .6);
+        }
+      }
+      &.ve-tick-down {
+        &:after {
+          content: '\25B2';
+          display: inline-block;
+          transform: rotate(180deg) scale(.8, .6);
+        }
+      }
+    }
+  }
+  &.ve-disabled {
+    background-color: var(--color-block-background-disabled, @normal-alpha-6);
+    * {
+      cursor: no-drop;
+    }
+  }
+}
+
+.ve-units-layer {
+  min-width: 20px;
+  .vu-layer-content {
+    min-height: 10px;
+  }
+  .ve-unit-item {
+    text-transform: lowercase;
+    padding: 3px 8px;
+    cursor: pointer;
+    color: @text-color;
+    font-family: Monaco, monospace;
+    font-size: 12px;
+    &:hover {
+      background: var(--color-block-background-light, @normal-alpha-9);
+    }
+  }
+}

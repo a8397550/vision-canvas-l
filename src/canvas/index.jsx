@@ -1,9 +1,20 @@
 import React from 'react';
 import { uuid } from '../util/index.js';
 import { VisionCanvasLBus, AssignToNew } from '../component-dispatch-center-bus/index.jsx';
+import request from '../util/require';
 import './index.less';
 
-const MyContainer = (WrappedComponent, options, index) => <WrappedComponent key={index} {...options} />;
+const MyContainer = (WrappedComponent, options, index, ref) => <WrappedComponent ref={ref} key={index} {...options} />;
+
+function getVisionCanvasLContext(VisionCanvasL) {
+  return {
+    getByNodeId: VisionCanvasL.getByNodeId.bind(VisionCanvasL),
+    getByNodeRef: VisionCanvasL.getByNodeRef.bind(VisionCanvasL),
+    fn: { //  提供一些function能力
+      fetch: request
+    },
+  }
+}
 
 /**
  * @description 画布组件
@@ -32,6 +43,7 @@ export class VisionCanvasL extends React.Component {
     this.moveObj = null;
     this.layout = props.layout;
     this.id = props.id || this.id;
+    this.nodes = {};
     this.state = {
       width: props.width,
       height: props.height,
@@ -302,7 +314,9 @@ export class VisionCanvasL extends React.Component {
     const { props } = this;
     const { moveFlag } = props;
     const { nodes } = this.state;
-    return nodes.map((item, index) => {
+    const list =  nodes.map((item, index) => {
+      const ref = React.createRef()
+      this.nodes[item.id] = ref;
       let style = {};
       // 默认属性赋值
       if (moveFlag && item.options.dropPos) {
@@ -390,10 +404,12 @@ export class VisionCanvasL extends React.Component {
           style={style}
           className={["vision-node-border", className, lenSelector ? 'vision-node-active' : ''].join(' ')}
           >
-            {MyContainer(item.component, item.options, index)}
+            {MyContainer(item.component, item.options, index, ref)}
           </div>
       )
     });
+
+    return list;
   }
 
   /**
@@ -413,6 +429,10 @@ export class VisionCanvasL extends React.Component {
         vActives[i].classList.remove('vision-node-active');
       }
     }
+  }
+
+  getByNodeRef(id) {
+    return this.nodes[id] && this.nodes[id].current || this.nodes[id];
   }
 
   getByNodeId(id) {
@@ -477,7 +497,7 @@ export class VisionCanvasL extends React.Component {
     if (height != '') {
       const h = parseInt(height, 10);
       if (!Number.isNaN(h)) {
-        _style.width = h;
+        _style.height = h;
       }
     }
 

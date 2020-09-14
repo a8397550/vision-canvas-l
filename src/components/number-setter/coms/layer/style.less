@@ -1,0 +1,36 @@
+@import "../number-control/ve-less-variables.less";
+
+.vu-layer {
+  z-index: 100000;
+  position: fixed;
+  background: var(--color-block-background-normal, @white-alpha-1) !important;
+  color: var(--color-text, @dark-alpha-3) !important;
+  left: 0;
+  top: 0;
+  transform: translate(-100%, -100%);
+  visibility: hidden;
+  pointer-events: none;
+  min-width: 80px;
+  box-shadow: @box-shadow-1;
+
+  .vu-layer-close {
+    position: absolute;
+    right: 1px;
+    top: 1px;
+    padding: 2px;
+  }
+
+  .vu-layer-content {
+    min-height: 20px;
+  }
+
+  .vu-layer-close + .vu-layer-content {
+    padding-top: 17px;
+  }
+
+  &.vu-visible {
+    pointer-events: auto;
+    transform: none;
+    visibility: visible;
+  }
+}

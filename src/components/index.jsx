@@ -5,11 +5,13 @@ import DemoB from './demo-b/index.jsx';
 import Text from './text/index.jsx'
 import ColumnarBase from '../bizcharts/columnar/index.jsx';
 import { VisionCanvasLBus } from '../component-dispatch-center-bus/index.jsx';
+import NumberSetter from './number-setter/index.jsx';
 
 VisionCanvasLBus.registerComponent(DemoA, 'DemoA');
 VisionCanvasLBus.registerComponent(DemoB, 'DemoB');
 VisionCanvasLBus.registerComponent(Text, 'Text');
 VisionCanvasLBus.registerComponent(ColumnarBase, 'ColumnarBaseA');
+VisionCanvasLBus.registerComponent(NumberSetter, 'NumberSetter')
 
 const { Option } = Select;
 const { TextArea } = Input;
@@ -149,5 +151,6 @@ export default {
   DemoB,
   ColumnarBase,
   Text,
+  NumberSetter,
   setCanvasAttribute
 }
