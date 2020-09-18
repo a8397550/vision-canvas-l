@@ -126,6 +126,11 @@ class IndexTemplateContainer extends React.Component {
               ],
               placeholder: '请输入表单宽度'
             }
+          },
+          {
+            id: '0-4',
+            title: "excel-or-csv",
+            componentName: "ExcelOrCsv",
           }
         ]
       }, {
